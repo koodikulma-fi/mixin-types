@@ -73,11 +73,9 @@
  * // - Actual implementation - //
  *
  * // On the JS side, the feature is implemented like this.
- * export function MixinsWith(...mixins) {
- *     let Base = Object;
- *     for (const mixin of mixins)
- *         Base = mixin(Base);
- *     return Base;
+ * // .. For example: `class MyClass extends Mixins(addMixin1, addMixin2) { }`.
+ * export function Mixins(...mixins) {
+ *     return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Object);
  * }
  *
  * ```
@@ -159,10 +157,9 @@ declare function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(..
  * // - Actual implementation - //
  *
  * // On the JS side, the feature is implemented like this.
+ * // .. For example: `class MyClass extends MixinsWith(BaseClass, addMixin1, addMixin2) { }`.
  * export function MixinsWith(Base, ...mixins) {
- *     for (const mixin of mixins)
- *         Base = mixin(Base);
- *     return Base;
+ *     return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Base);
  * }
  *
  * ```
@@ -281,10 +278,18 @@ type EvaluateMixinChain<Mixins extends Array<any>, BaseClass extends ClassType =
  * ```
  */
 type MergeMixins<Mixins extends Array<(Base: ClassType) => ClassType>, Class extends Object = {}, Instance extends Object = {}, Index extends number | never = 0> = IterateForwards[Mixins["length"]] extends never ? ReClassify<ReturnType<Mixins[number]>, InstanceType<ReturnType<Mixins[number]>>> : Index extends never ? ReClassify<Class, Instance> : Index extends Mixins["length"] ? Index extends 0 ? ReClassify<Class, Instance, GetConstructorArgs<Instance>> : ReClassify<Class, Instance, GetConstructorArgs<ReturnType<Mixins[IterateBackwards[Index]]>>> : MergeMixins<Mixins, Class & ReturnType<Mixins[Index]>, Instance & InstanceType<ReturnType<Mixins[Index]>>, IterateForwards[Index]>;
+/** This is exactly like MergeMixins (see its notes) but returns the instance type. Useful for creating a class interface.
+ * - For example: `MixinsInstance<MixinsArray>`.
+ */
+type MixinsInstance<Mixins extends Array<(Base: ClassType) => ClassType>, Class extends Object = {}, Instance extends Object = {}> = InstanceType<MergeMixins<Mixins, Class, Instance>>;
 /** This is exactly like MergeMixins (see its notes) but allows to input the class type of the base class for the mixin chain.
  * - To get the type of the class use `typeof MyBaseClass`, where MyBaseClass is a JS class: `class MyBaseClass {}`.
  * - For example: `MergeMixinsWith<typeof MyBaseClass, MixinsArray>`.
  */
 type MergeMixinsWith<BaseClass extends ClassType, Mixins extends Array<(Base: ClassType) => ClassType>> = MergeMixins<Mixins, BaseClass, InstanceType<BaseClass>>;
+/** This is exactly like MergeMixinsWith (see its notes) but returns the instance type. Useful for creating a class interface.
+ * - For example: `MixinsInstanceWith<typeof MyBaseClass, MixinsArray>`.
+ */
+type MixinsInstanceWith<BaseClass extends ClassType, Mixins extends Array<(Base: ClassType) => ClassType>> = InstanceType<MergeMixins<Mixins, BaseClass, InstanceType<BaseClass>>>;
 
-export { ClassType, EvaluateMixinChain, GetConstructorArgs, GetConstructorReturn, IncludesValue, IterateBackwards, IterateForwards, MergeMixins, MergeMixinsWith, Mixins, MixinsWith, ReClassify };
+export { ClassType, EvaluateMixinChain, GetConstructorArgs, GetConstructorReturn, IncludesValue, IterateBackwards, IterateForwards, MergeMixins, MergeMixinsWith, Mixins, MixinsInstance, MixinsInstanceWith, MixinsWith, ReClassify };

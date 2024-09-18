@@ -76,7 +76,8 @@
  * // - Actual implementation - //
  * 
  * // On the JS side, the feature is implemented like this.
- * export function MixinsWith(...mixins) {
+ * // .. For example: `class MyClass extends Mixins(addMixin1, addMixin2) { }`.
+ * export function Mixins(...mixins) {
  *     return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Object);
  * }
  * 
@@ -162,6 +163,7 @@ export function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(...
  * // - Actual implementation - //
  * 
  * // On the JS side, the feature is implemented like this.
+ * // .. For example: `class MyClass extends MixinsWith(BaseClass, addMixin1, addMixin2) { }`.
  * export function MixinsWith(Base, ...mixins) {
  *     return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Base);
  * }
