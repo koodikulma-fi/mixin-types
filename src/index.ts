@@ -66,6 +66,9 @@
  * 
  * // - Passing generic parameters (complex) - //
  * 
+ * 
+ * UPDATE... BAD APPRAOCH.
+ * 
  * // However, TypeScript may start to complain about the deepness of the dynamic class type.
  * // .. To provide explicit typing without circularity, we can do the following trick.
  * 
@@ -352,28 +355,26 @@ export type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Om
 };
 
 // Mixin re-typing.
-/** Type helper for mixins.
+/** Type helper for classes extending mixins with generic parameters.
  * @param ExtendsInstance Should refer to the instance type of the mixin. To feed in class type use `AsMixinType`.
  * @returns The returned type is a mixin creator, essentially: `(Base: TBase) => TBase & TExtends`.
  * 
  * ```
  * // Let's first examine a simple mixin with generic params.
  * // .. It works fine, until things become more complex: you get problems with excessive deepness of types.
- * const addMyMixin_Simple = <Info = {}>(Base: Base) => class MyMixin extends Base { 
+ * const addMyMixin_Simple = <Info = {}>(Base: Base) => class MyMixin extends Base {
  *      feedInfo(info: Info): void {}
  * }
  * 
  * // To provide a mixin base without problems of deepness we can do the following.
- * // .. The annoyance with this is that we lose automated typing of the BaseClass.
+ * // .. Let's explicitly type what addMyMixin returns to help typescript.
  * interface MyMixin<Info = {}> { feedInfo(info: Info): void; }
- * const addMyMixin = <
- *      Info = {},
- *      BaseClass extends ClassType = ClassType
- * >(Base: BaseClass): ClassType<MyMixin<Info>> => class MyMixin extends Base {
+ * const addMyMixin = <Info = {}, BaseClass extends ClassType = ClassType>(Base: BaseClass): ClassType<MyMixin<Info>> => class MyMixin extends Base {
  *      feedInfo(info: Info): void {}
  * }
  * 
- * // The AsMixin simply provides an alternative way to choose which is typed and which is automated.
+ * // The annoyance with above is that we lose automated typing of the BaseClass.
+ * // .. AsMixin simply provides a way to automate the typing of the base class.
  * type MyInfo = { something: boolean; };
  * class MyMix_1 extends addMyMixin<MyInfo, typeof MyBase>(MyBase) { } // Needs to specify the base type explicitly here.
  * class MyMix_2 extends (addMyMixin as AsMixin<MyMixin<MyInfo>>)(MyBase) { } // Get MyBase type dynamically.
@@ -383,15 +384,6 @@ export type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Om
  */
 export type AsMixin<ExtendsInstance extends Object> =
     <TBase extends ClassType>(Base: TBase) => Omit<TBase, "new"> & { new (...args: GetConstructorArgs<ExtendsInstance["constructor"]>): GetConstructorReturn<TBase> & GetConstructorReturn<ExtendsInstance["constructor"]>; };
-
-// /** Type helper for mixins.
-//  * @param TExtends Should refer to the class type of the mixin. To feed in instance type use `AsMixin`.
-//  * @returns The returned type is a mixin creator, essentially: `(Base: TBase) => TBase & TExtends`.
-//  * 
-//  * See comments for `AsMixin` for more.
-//  */
-// export type AsMixinType<TExtends extends ClassType> =
-//     <TBase extends ClassType>(Base: TBase) => Omit<TBase & TExtends, "new"> & { new (...args: GetConstructorArgs<TExtends>): GetConstructorReturn<TBase> & GetConstructorReturn<TExtends>; };
 
 // Evaluate mixins.
 /** Evaluate a chain of mixins.
@@ -472,7 +464,6 @@ export type EvaluateMixinChain<
  * mergedClass.constructor.STATIC_ONE; // number
  * mergedClass.name = "Mergy";
  * 
- * 
  * ```
  */
 export type MergeMixins<
@@ -516,3 +507,72 @@ export type MixinsInstanceWith<
     BaseClass extends ClassType,
     Mixins extends Array<(Base: ClassType) => ClassType>
 > = InstanceType<MergeMixins<Mixins, BaseClass, InstanceType<BaseClass>>>;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Create mixins.
+const addMixin1 = <Info = {}>(Base: ClassType) => class Mixin1 extends Base { num: number = 5; testMe(testInfo: Info): void {} }
+const addMixin2 = (Base: ClassType) => class Mixin2 extends Base { name: string; }
+const addMixin3 = <Info = {}>(Base: ReturnType<typeof addMixin1<Info>>) => class Mixin3 extends Base { }
+
+// Create a mixed class.
+// .. Provide MyInfo systematically to all that use it. Otherwise you get `unknown` for the related type.
+type MyInfo = { something: boolean; };
+
+
+// - Passing generic parameters (complex) - //
+
+// UPDATE... BAD APPRAOCH.
+
+// However, TypeScript may start to complain about the deepness of the dynamic class type.
+// .. To provide explicit typing without circularity, we can do the following trick.
+
+// 1. Declare an interface for local use.
+interface _MyMixinClass<Info extends Record<string, any> = {}> {
+
+   // Optional. Sync use with addMyMixinClass.
+   ["constructor"]: ClassType<_MyMixinClass<Info>>;
+
+   myMethod<Key extends keyof Info & string>(key: Key): Info[Key];
+}
+
+// 2. Declare the public mixin adder for MyMixinClass so that it returns class type of _MyMixinClass<Info>.
+export function addMyMixinClass<Info extends Record<string, any> = {}>(Base: ClassType): ClassType<_MyMixinClass<Info>> {
+   return class MyMixinClass extends Base {
+       
+       // Optional. Sync use with _MyMixinClass.
+       ["constructor"]: ClassType<_MyMixinClass<Info>>;
+
+       info: Record<string, any>; // Or `info: Info;`
+
+       // In the constructor use type explicitly.
+       constructor(info: Info, ...args: any[]) {
+           super(...args);
+           this.info = info;
+       }
+
+       myMethod(key: string): any {
+           return this.info
+       }
+
+  } as any; // Needed for complex cases.
+}
+
+// Declare stand-alone if wanted.
+export class MyMixinClass<Info extends Record<string, any> = {}> extends (addMyMixinClass(Object) as ClassType) { }
+export interface MyMixinClass<Info extends Record<string, any> = {}> extends _MyMixinClass<Info> { }
+
+// Test.
+const myMixinClass = new MyMixinClass<{ test: boolean; }>();
+const value = myMixinClass.myMethod("test"); // Requires `"test"` and returns `boolean`.

@@ -63,6 +63,9 @@
  *
  * // - Passing generic parameters (complex) - //
  *
+ *
+ * UPDATE... BAD APPRAOCH.
+ *
  * // However, TypeScript may start to complain about the deepness of the dynamic class type.
  * // .. To provide explicit typing without circularity, we can do the following trick.
  *
@@ -333,7 +336,7 @@ type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Clas
         ["constructor"]: AsClass<Class, Instance, ConstructorArgs>;
     };
 };
-/** Type helper for mixins.
+/** Type helper for classes extending mixins with generic parameters.
  * @param ExtendsInstance Should refer to the instance type of the mixin. To feed in class type use `AsMixinType`.
  * @returns The returned type is a mixin creator, essentially: `(Base: TBase) => TBase & TExtends`.
  *
@@ -345,16 +348,14 @@ type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Clas
  * }
  *
  * // To provide a mixin base without problems of deepness we can do the following.
- * // .. The annoyance with this is that we lose automated typing of the BaseClass.
+ * // .. Let's explicitly type what addMyMixin returns to help typescript.
  * interface MyMixin<Info = {}> { feedInfo(info: Info): void; }
- * const addMyMixin = <
- *      Info = {},
- *      BaseClass extends ClassType = ClassType
- * >(Base: BaseClass): ClassType<MyMixin<Info>> => class MyMixin extends Base {
+ * const addMyMixin = <Info = {}, BaseClass extends ClassType = ClassType>(Base: BaseClass): ClassType<MyMixin<Info>> => class MyMixin extends Base {
  *      feedInfo(info: Info): void {}
  * }
  *
- * // The AsMixin simply provides an alternative way to choose which is typed and which is automated.
+ * // The annoyance with above is that we lose automated typing of the BaseClass.
+ * // .. AsMixin simply provides a way to automate the typing of the base class.
  * type MyInfo = { something: boolean; };
  * class MyMix_1 extends addMyMixin<MyInfo, typeof MyBase>(MyBase) { } // Needs to specify the base type explicitly here.
  * class MyMix_2 extends (addMyMixin as AsMixin<MyMixin<MyInfo>>)(MyBase) { } // Get MyBase type dynamically.
@@ -426,7 +427,6 @@ type EvaluateMixinChain<Mixins extends Array<any>, BaseClass extends ClassType =
  * mergedClass.constructor.STATIC_ONE; // number
  * mergedClass.name = "Mergy";
  *
- *
  * ```
  */
 type MergeMixins<Mixins extends Array<(Base: ClassType) => ClassType>, Class extends Object = {}, Instance extends Object = {}, Index extends number | never = 0> = IterateForwards[Mixins["length"]] extends never ? AsClass<ReturnType<Mixins[number]>, InstanceType<ReturnType<Mixins[number]>>> : Index extends never ? AsClass<Class, Instance> : Index extends Mixins["length"] ? Index extends 0 ? AsClass<Class, Instance, GetConstructorArgs<Instance>> : AsClass<Class, Instance, GetConstructorArgs<ReturnType<Mixins[IterateBackwards[Index]]>>> : MergeMixins<Mixins, Class & ReturnType<Mixins[Index]>, Instance & InstanceType<ReturnType<Mixins[Index]>>, IterateForwards[Index]>;
@@ -443,5 +443,15 @@ type MergeMixinsWith<BaseClass extends ClassType, Mixins extends Array<(Base: Cl
  * - For example: `MixinsInstanceWith<typeof MyBaseClass, MixinsArray>`.
  */
 type MixinsInstanceWith<BaseClass extends ClassType, Mixins extends Array<(Base: ClassType) => ClassType>> = InstanceType<MergeMixins<Mixins, BaseClass, InstanceType<BaseClass>>>;
+interface _MyMixinClass<Info extends Record<string, any> = {}> {
+    ["constructor"]: ClassType<_MyMixinClass<Info>>;
+    myMethod<Key extends keyof Info & string>(key: Key): Info[Key];
+}
+declare function addMyMixinClass<Info extends Record<string, any> = {}>(Base: ClassType): ClassType<_MyMixinClass<Info>>;
+declare const MyMixinClass_base: ClassType<{}, any[]>;
+declare class MyMixinClass<Info extends Record<string, any> = {}> extends MyMixinClass_base {
+}
+interface MyMixinClass<Info extends Record<string, any> = {}> extends _MyMixinClass<Info> {
+}
 
-export { AsClass, AsMixin, ClassType, EvaluateMixinChain, GetConstructorArgs, GetConstructorReturn, IncludesValue, IterateBackwards, IterateForwards, MergeMixins, MergeMixinsWith, Mixins, MixinsInstance, MixinsInstanceWith, MixinsWith };
+export { AsClass, AsMixin, ClassType, EvaluateMixinChain, GetConstructorArgs, GetConstructorReturn, IncludesValue, IterateBackwards, IterateForwards, MergeMixins, MergeMixinsWith, Mixins, MixinsInstance, MixinsInstanceWith, MixinsWith, MyMixinClass, addMyMixinClass };
