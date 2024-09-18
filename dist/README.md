@@ -10,11 +10,20 @@
 The npm package can be found with: [mixin-types](https://www.npmjs.com/package/mixin-types). Contribute in GitHub: [koodikulma-fi/mixin-types.git](https://github.com/koodikulma-fi/mixin-types.git)
 
 The documentation below explains how to set up and use mixins in various circumstances.
+0. General guidelines
 1. Simple mixins
 2. Passing generic params from class (to simple mixins)
 3. Complex mixins and generic parameters
 4. Constructor arguments
 5. Using `instanceof`
+
+---
+
+## 0. GENERAL GUIDELINES
+- For a clean overall mixin architecture, keep the purpose of each mixin simple and detached from each other.
+- If a mixin is dependent on another mixin, consider _including_ it, instead of _requiring_ it.
+    * For example: `addMyBigMixin = (Base) => return class MyBigMixin extends addMySmallMixin(Base) { ... }`.
+- Keep constructor arguments clean and minimal (and their count fixed), or preferably don't use them at all.
 
 ---
 
@@ -238,10 +247,10 @@ function addSignalBoy_CIRCULAR<Data = {}, TBase extends ClassType = ClassType>(B
     * Note that want to avoid deepness and anyway extend mere `ClassType`: `class SignalBoy extends (_addSignalBoy() as ClassType) {}`.
     * Accordingly, we can make the _addSignalBoy directly return `ClassType`, to simplify above: `class SignalBoy extends _addSignalBoy {}`.
 - We then export a cleaned up `addSignalBoy<Signals>` for the public use of our mixin.
-- Sidenote. You might be tempted to instead split the interface into private/public instead of the mixin function.
-    * For example: using `interface _MyMix<Info = {}> { ... }` as the core part for MyMix class and its mixin forms.
-    * This works fine, until you try to use MyMix outside the file: It complains about addMyMix uses a private / unexported interface.
-    * So then you might go to export it but then it's just confusing outside: _MyMix and MyMix interfaces are both there and 100% equal.
+- Sidenote. You might be tempted to instead split the _interface_ (not mixin func) into private/public parts.
+    * For example: using `interface _MyMix<Info = {}> { ... }` as the core for MyMix.
+    * This works fine, until you use MyMix outside the file, as addMyMix uses a private / unexported interface.
+    * You could then export it, but it's just confusing: _MyMix and MyMix interfaces are both there and 100% equal.
 
 
 ```typescript
@@ -343,7 +352,7 @@ myMix2.name; // string;
 // To uplift MyMix to have generic parameters, just define class + interface, like done above.
 // .. Class extending ClassType.
 class MyMix<AddSignals extends SignalsRecord = {}> extends (SignalBoy(MyBase) as ClassType) {
-    // Just to define constructor explicitly. In our mixing chain, there's no construtor args.
+    // Just to define constructor explicitly. In our mixing chain, there's no constructor args.
     constructor() {
         super();
     }
@@ -369,9 +378,9 @@ myMix.sendSignal("sendDescription", "Mixins", "So many things.");
 - Generally speaking, you should prefer not using constructor arguments in mixins.
 - When you use them, keep them very simple, preferably just taking 1 argument - definitely not say, 1-3 arguments.
 - There's also inherentely insolvable cases for trying to automate how constructor arguments map out.
-    * The simple answer is that it's simply the last mixin in the chain that defines the arguments, and it's true (mostly).
-    * However, it might blindly pass on arguments further, eg. `constructor(myStuff: Stuff, ...args: any[]) { super(...args); }`.
-    * And because of this the `...args: any[]` should actually be typed specifically. However it is actually impossible to know it for sure (see case below).
+    * The simple answer is that the last mixin in the chain defines the arguments, and it's true (mostly).
+    * Even though it's blindly passing on args: `constructor(myStuff: Stuff, ...args: any[]) { super(...args); }`.
+    * However it is actually impossible to know the ...args for sure (see case below) at the internal level.
 - To solve it all:
     * At the conceptual level, the constructor arguments of the mixed sequence should be defined for each mix explicitly.
         - This can be done either directly to a mix (with MergeMixins or AsClass) or by extending the mix with a class and use its constructor.
