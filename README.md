@@ -1,7 +1,8 @@
 
 ## TODO:
-- Finish docs.
-- Make MERGEMIXINS allow to take CONSTRUCTOR ARGS..! Just pass it along from one to next. Then can go downards too.
+- Finish docs:
+    5. Constructor args
+    6. Using instanceof
 
 ## WHAT
 
