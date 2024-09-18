@@ -328,17 +328,17 @@ type GetConstructorReturn<T> = T extends new (...args: any[]) => infer U ? U : n
  * Parameters and return:
  * @param Class Should refer to the type of the merged class type. For fluency it's not required that it's a ClassType (the "new" part will be omitted anyhow).
  * @param Instance Should refer to the type of the merged class instance.
- * @param ConstructorArgs Should refer to the constructor arguments of the new class (= the last mixin in the chain).
+ * @param ConstructorArgs Should refer to the constructor arguments of the new class (= the last mixin in the chain). Defaults to [].
  * @returns The returned type is a new class type, with recursive class <-> instance support.
  */
-type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Class, "new"> & {
+type AsClass<Class, Instance, ConstructorArgs extends any[] = []> = Omit<Class, "new"> & {
     new (...args: ConstructorArgs): Instance & {
         ["constructor"]: AsClass<Class, Instance, ConstructorArgs>;
     };
 };
 /** Type helper for classes extending mixins with generic parameters.
- * @param ExtendsInstance Should refer to the instance type of the mixin. To feed in class type use `AsMixinType`.
- * @returns The returned type is a mixin creator, essentially: `(Base: TBase) => TBase & TExtends`.
+ * @param MixinInstance Should refer to the instance type of the mixin. To feed in class type use `AsMixinType`.
+ * @returns The returned type is a mixin creator, essentially: `(Base: TBase) => TBase & ClassType<MixinInstance>`.
  *
  * ```
  * // Let's first examine a simple mixin with generic params.
@@ -363,8 +363,8 @@ type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Clas
  * ```
  *
  */
-type AsMixin<ExtendsInstance extends Object> = <TBase extends ClassType>(Base: TBase) => Omit<TBase, "new"> & {
-    new (...args: GetConstructorArgs<ExtendsInstance["constructor"]>): GetConstructorReturn<TBase> & GetConstructorReturn<ExtendsInstance["constructor"]>;
+type AsMixin<MixinInstance extends Object> = <TBase extends ClassType>(Base: TBase) => Omit<TBase, "new"> & {
+    new (...args: GetConstructorArgs<MixinInstance["constructor"]>): GetConstructorReturn<TBase> & GetConstructorReturn<MixinInstance["constructor"]>;
 };
 /** Evaluate a chain of mixins.
  * - Returns back an array with the respective mixins or supplements with `never` for each failed item.
