@@ -67,20 +67,20 @@
  * // .. To provide explicit typing without circularity, we can do the following trick.
  *
  * // 1. Declare an interface for local use.
- * interface MyMixinClassInterface<Info extends Record<string, any> = {}> {
+ * interface _MyMixinClass<Info extends Record<string, any> = {}> {
  *
  *     // Optional. Sync use with addMyMixinClass.
- *     ["constructor"]: ClassType<MyMixinClassInterface<Info>>;
+ *     ["constructor"]: ClassType<_MyMixinClass<Info>>;
  *
  *     myMethod<Key extends keyof Info & string>(key: Key): Info[Key];
  * }
  *
- * // 2. Declare the public mixin adder for MyMixinClass so that it returns class type of MyMixinClassInterface<Info>.
- * export function addMyMixinClass<Info extends Record<string, any> = {}>(Base: ClassType): ClassType<MyMixinClassInterface<Info>> {
+ * // 2. Declare the public mixin adder for MyMixinClass so that it returns class type of _MyMixinClass<Info>.
+ * export function addMyMixinClass<Info extends Record<string, any> = {}>(Base: ClassType): ClassType<_MyMixinClass<Info>> {
  *     return class MyMixinClass extends Base {
  *
- *         // Optional. Sync use with MyMixinClassInterface.
- *         ["constructor"]: ClassType<MyMixinClassInterface<Info>>;
+ *         // Optional. Sync use with _MyMixinClass.
+ *         ["constructor"]: ClassType<_MyMixinClass<Info>>;
  *
  *         info: Record<string, any>; // Or `info: Info;`
  *
@@ -99,7 +99,7 @@
  *
  * // Declare stand-alone if wanted.
  * export class MyMixinClass<Info extends Record<string, any> = {}> extends (addMyMixinClass(Object) as ClassType) { }
- * export interface MyMixinClass<Info extends Record<string, any> = {}> extends MyMixinClassInterface<Info> { }
+ * export interface MyMixinClass<Info extends Record<string, any> = {}> extends _MyMixinClass<Info> { }
  *
  * // Test.
  * const myMixinClass = new MyMixinClass<{ test: boolean; }>();
@@ -109,7 +109,7 @@
  * // - About mixing manually - //
  *
  * // If you use the above mixins manually, you get two problems (that's why `Mixins` function exists).
- * // 1. The result won't give you the combined type. Though you could use MergeMixins or ReClassify type to re-type it.
+ * // 1. The result won't give you the combined type. Though you could use MergeMixins or AsClass type to re-type it.
  * // 2. You get problems with intermediate steps in the chain.
  * // +  The core reason for these problems is that each pair is evaluated separately, not as a continuum.
  * //
@@ -207,16 +207,16 @@ declare function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(..
  * }
  *
  * // 1. Declare an interface for local use.
- * interface MyMixinClassInterface<Info extends Record<string, any> = {}> extends MyBase<Info> {
+ * interface _MyMixinClass<Info extends Record<string, any> = {}> extends MyBase<Info> {
  *
  *    // Optional. Sync use with addMyMixinClass.
- *    // .. Note. This example uses `MyMixinClassType<Info>` insteadof `ClassType<MyMixinClassInterface<Info>> & MyBaseType<Info>`.
+ *    // .. Note. This example uses `MyMixinClassType<Info>` insteadof `ClassType<_MyMixinClass<Info>> & MyBaseType<Info>`.
  *    ["constructor"]: MyMixinClassType<Info>;
  *
  *    myMethod<Key extends keyof Info & string>(key: Key): Info[Key];
  * }
  *
- * // 2. Declare the public mixin adder for MyMixinClass so that it returns class type of MyMixinClassInterface<Info>.
+ * // 2. Declare the public mixin adder for MyMixinClass so that it returns class type of _MyMixinClass<Info>.
  * // .. In this example, we use `MyMixinClassType<Info>` as a shortcut.
  * export function addMyMixinClass<Info extends Record<string, any> = {}>(Base: MyBaseType<Info>): MyMixinClassType<Info> {
  *    return class MyMixinClass extends Base {
@@ -225,7 +225,7 @@ declare function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(..
  *
  *        public info: Record<string, any>; // Or `info: Info;`
  *
- *        // Optional. Sync use with MyMixinClassInterface.
+ *        // Optional. Sync use with _MyMixinClass.
  *        ["constructor"]: MyMixinClassType<Info>;
  *
  *        // In the constructor use type explicitly.
@@ -243,12 +243,12 @@ declare function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(..
  *
  * // 3. Optional: Declare stand-alone if wanted.
  * export class MyMixinClass<Info extends Record<string, any> = {}> extends (addMyMixinClass(MyBase) as ClassType) { }
- * export interface MyMixinClass<Info extends Record<string, any> = {}> extends MyMixinClassInterface<Info> { }
+ * export interface MyMixinClass<Info extends Record<string, any> = {}> extends _MyMixinClass<Info> { }
  * // 4. Optional: The class type, too.
  * // .. Then we can use it in the addMyMixinClass.
- * // .. Otherwise should use `ClassType<MyMixinClassInterface<Info>> & MyBaseType<Info>`.
+ * // .. Otherwise should use `ClassType<_MyMixinClass<Info>> & MyBaseType<Info>`.
  * export interface MyMixinClassType<Info extends Record<string, any> = {}> extends
- *     ClassType<MyMixinClassInterface<Info>>, MyBaseType<Info>
+ *     ClassType<_MyMixinClass<Info>>, MyBaseType<Info>
  * {
  *     STATIC_ONE: number;
  * }
@@ -266,7 +266,7 @@ declare function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(..
  * // - About mixing manually - //
  *
  * // If you use the above mixins and base class manually, you get two problems (that's why `MixinsWith` function exists).
- * // 1. The result won't give you the combined type. Though you could use MergeMixins or ReClassify type to re-type it.
+ * // 1. The result won't give you the combined type. Though you could use MergeMixins or AsClass type to re-type it.
  * // 2. You get problems with intermediate steps in the chain.
  * // +  The core reason for these problems is that each pair is evaluated separately, not as a continuum.
  * //
@@ -306,7 +306,7 @@ type GetConstructorReturn<T> = T extends new (...args: any[]) => infer U ? U : n
  * ```
  *
  * // Declare type.
- * type MyClassType = ReClassify<{ SOMETHING_STATIC: number; }, { instanced: boolean; }, [one: number, two?: boolean]>;
+ * type MyClassType = AsClass<{ SOMETHING_STATIC: number; }, { instanced: boolean; }, [one: number, two?: boolean]>;
  *
  * // Fake a class and instance on JS side.
  * const MyClass = class MyClass { } as unknown as MyClassType;
@@ -328,14 +328,48 @@ type GetConstructorReturn<T> = T extends new (...args: any[]) => infer U ? U : n
  * @param ConstructorArgs Should refer to the constructor arguments of the new class (= the last mixin in the chain).
  * @returns The returned type is a new class type, with recursive class <-> instance support.
  */
-type ReClassify<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Class, "new"> & {
-    new (...args: ConstructorArgs): Omit<Instance, "constructor"> & {
-        ["constructor"]: ReClassify<Class, Instance, ConstructorArgs>;
+type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Class, "new"> & {
+    new (...args: ConstructorArgs): Instance & {
+        ["constructor"]: AsClass<Class, Instance, ConstructorArgs>;
     };
+};
+/** Type helper for mixins.
+ * @param ExtendsInstance Should refer to the instance type of the mixin. To feed in class type use `AsMixinType`.
+ * @returns The returned type is a mixin creator, essentially: `(Base: TBase) => TBase & TExtends`.
+ *
+ * ```
+ * // Let's first examine a simple mixin with generic params.
+ * // .. It works fine, until things become more complex: you get problems with excessive deepness of types.
+ * const addMyMixin_Simple = <Info = {}>(Base: Base) => class MyMixin extends Base {
+ *      feedInfo(info: Info): void {}
+ * }
+ *
+ * // To provide a mixin base without problems of deepness we can do the following.
+ * // .. The annoyance with this is that we lose automated typing of the BaseClass.
+ * interface MyMixin<Info = {}> { feedInfo(info: Info): void; }
+ * const addMyMixin = <
+ *      Info = {},
+ *      BaseClass extends ClassType = ClassType
+ * >(Base: BaseClass): ClassType<MyMixin<Info>> => class MyMixin extends Base {
+ *      feedInfo(info: Info): void {}
+ * }
+ *
+ * // The AsMixin simply provides an alternative way to choose which is typed and which is automated.
+ * type MyInfo = { something: boolean; };
+ * class MyMix_1 extends addMyMixin<MyInfo, typeof MyBase>(MyBase) { } // Needs to specify the base type explicitly here.
+ * class MyMix_2 extends (addMyMixin as AsMixin<MyMixin<MyInfo>>)(MyBase) { } // Get MyBase type dynamically.
+ *
+ * ```
+ *
+ */
+type AsMixin<ExtendsInstance extends Object> = <TBase extends ClassType>(Base: TBase) => Omit<TBase, "new"> & {
+    new (...args: GetConstructorArgs<ExtendsInstance["constructor"]>): GetConstructorReturn<TBase> & GetConstructorReturn<ExtendsInstance["constructor"]>;
 };
 /** Evaluate a chain of mixins.
  * - Returns back an array with the respective mixins or supplements with `never` for each failed item.
  * - The failure is by it required from previous mixins or by not being a function in the mixin form: `(Base: ClassType) => ClassType`.
+ * - Note that the evaluation does not take into account how constructor arguments are passed - but validates instead inheritance of class features.
+ *
  * ```
  *
  * // Create mixins.
@@ -395,7 +429,7 @@ type EvaluateMixinChain<Mixins extends Array<any>, BaseClass extends ClassType =
  *
  * ```
  */
-type MergeMixins<Mixins extends Array<(Base: ClassType) => ClassType>, Class extends Object = {}, Instance extends Object = {}, Index extends number | never = 0> = IterateForwards[Mixins["length"]] extends never ? ReClassify<ReturnType<Mixins[number]>, InstanceType<ReturnType<Mixins[number]>>> : Index extends never ? ReClassify<Class, Instance> : Index extends Mixins["length"] ? Index extends 0 ? ReClassify<Class, Instance, GetConstructorArgs<Instance>> : ReClassify<Class, Instance, GetConstructorArgs<ReturnType<Mixins[IterateBackwards[Index]]>>> : MergeMixins<Mixins, Class & ReturnType<Mixins[Index]>, Instance & InstanceType<ReturnType<Mixins[Index]>>, IterateForwards[Index]>;
+type MergeMixins<Mixins extends Array<(Base: ClassType) => ClassType>, Class extends Object = {}, Instance extends Object = {}, Index extends number | never = 0> = IterateForwards[Mixins["length"]] extends never ? AsClass<ReturnType<Mixins[number]>, InstanceType<ReturnType<Mixins[number]>>> : Index extends never ? AsClass<Class, Instance> : Index extends Mixins["length"] ? Index extends 0 ? AsClass<Class, Instance, GetConstructorArgs<Instance>> : AsClass<Class, Instance, GetConstructorArgs<ReturnType<Mixins[IterateBackwards[Index]]>>> : MergeMixins<Mixins, Class & ReturnType<Mixins[Index]>, Instance & InstanceType<ReturnType<Mixins[Index]>>, IterateForwards[Index]>;
 /** This is exactly like MergeMixins (see its notes) but returns the instance type. Useful for creating a class interface.
  * - For example: `MixinsInstance<MixinsArray>`.
  */
@@ -410,4 +444,4 @@ type MergeMixinsWith<BaseClass extends ClassType, Mixins extends Array<(Base: Cl
  */
 type MixinsInstanceWith<BaseClass extends ClassType, Mixins extends Array<(Base: ClassType) => ClassType>> = InstanceType<MergeMixins<Mixins, BaseClass, InstanceType<BaseClass>>>;
 
-export { ClassType, EvaluateMixinChain, GetConstructorArgs, GetConstructorReturn, IncludesValue, IterateBackwards, IterateForwards, MergeMixins, MergeMixinsWith, Mixins, MixinsInstance, MixinsInstanceWith, MixinsWith, ReClassify };
+export { AsClass, AsMixin, ClassType, EvaluateMixinChain, GetConstructorArgs, GetConstructorReturn, IncludesValue, IterateBackwards, IterateForwards, MergeMixins, MergeMixinsWith, Mixins, MixinsInstance, MixinsInstanceWith, MixinsWith };

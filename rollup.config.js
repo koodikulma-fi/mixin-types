@@ -20,7 +20,7 @@ export default [
     {
         input: 'dist/dts/index.d.ts',
         output: {
-          file: 'dist/easy-mix.d.ts',
+          file: 'dist/mixin-types.d.ts',
           format: 'es',
         },
         plugins: [
@@ -35,7 +35,7 @@ export default [
     {
         input: 'dist/index.js',
         output: {
-            file: 'dist/easy-mix.module.js',
+            file: 'dist/mixin-types.module.js',
             format: 'es',
         },
         plugins: [
@@ -60,7 +60,7 @@ export default [
     {
         input: 'dist/index.js',
         output: {
-            file: 'dist/easy-mix.js',
+            file: 'dist/mixin-types.js',
             format: 'cjs',
             exports: "auto"
         },

@@ -1,17 +1,21 @@
 
 ## WHAT
 
-`easy-mix` provides two simple JS functions (`Mixins` and `MixinsWith`) to handle mixins, and related TS tools.
+`mixin-types` provides two simple JS functions (`Mixins` and `MixinsWith`) to handle mixins, and related TS tools.
 
-The npm package can be found with: [easy-mix](https://www.npmjs.com/package/easy-mix). Contribute in GitHub: [koodikulma-fi/easy-mix.git](https://github.com/koodikulma-fi/easy-mix.git)
+The npm package can be found with: [mixin-types](https://www.npmjs.com/package/mixin-types). Contribute in GitHub: [koodikulma-fi/mixin-types.git](https://github.com/koodikulma-fi/mixin-types.git)
 
 ---
 
 ## TODO
 
-- Rename to `easy-mixins`.
+- Rename to `mixin-typesins`.
 - Add info about ARGUMENTS in the constructors.
 - Add notes about `instanceof` usage.
+- Fix notes about the GENERIC COMPLEX PASSING:
+    * Various ways to do it. Preferred common general pattern. (eg. DataMan)
+
+
 
 ---
 
@@ -102,20 +106,20 @@ myClass.num === value; // The type is `boolean`, and outcome `true` on JS side.
 // .. To provide explicit typing without circularity, we can do the following trick.
 
 // 1. Declare an interface for local use.
-interface MyMixinClassInterface<Info extends Record<string, any> = {}> {
+interface _MyMixinClass<Info extends Record<string, any> = {}> {
 
     // Optional. Sync use with addMyMixinClass.
-    ["constructor"]: ClassType<MyMixinClassInterface<Info>>;
+    ["constructor"]: ClassType<_MyMixinClass<Info>>;
 
     myMethod<Key extends keyof Info & string>(key: Key): Info[Key];
 }
 
-// 2. Declare the public mixin adder for MyMixinClass so that it returns class type of MyMixinClassInterface<Info>.
-export function addMyMixinClass<Info extends Record<string, any> = {}>(Base: ClassType): ClassType<MyMixinClassInterface<Info>> {
+// 2. Declare the public mixin adder for MyMixinClass so that it returns class type of _MyMixinClass<Info>.
+export function addMyMixinClass<Info extends Record<string, any> = {}>(Base: ClassType): ClassType<_MyMixinClass<Info>> {
     return class MyMixinClass extends Base {
         
-        // Optional. Sync use with MyMixinClassInterface.
-        ["constructor"]: ClassType<MyMixinClassInterface<Info>>;
+        // Optional. Sync use with _MyMixinClass.
+        ["constructor"]: ClassType<_MyMixinClass<Info>>;
 
         info: Record<string, any>; // Or `info: Info;`
 
@@ -134,7 +138,7 @@ export function addMyMixinClass<Info extends Record<string, any> = {}>(Base: Cla
 
 // Declare stand-alone if wanted.
 export class MyMixinClass<Info extends Record<string, any> = {}> extends (addMyMixinClass(Object) as ClassType) { }
-export interface MyMixinClass<Info extends Record<string, any> = {}> extends MyMixinClassInterface<Info> { }
+export interface MyMixinClass<Info extends Record<string, any> = {}> extends _MyMixinClass<Info> { }
 
 // Test.
 const myMixinClass = new MyMixinClass<{ test: boolean; }>();
@@ -147,7 +151,7 @@ const value = myMixinClass.myMethod("test"); // Requires `"test"` and returns `b
 ```typescript
 
 // If you use the above mixins manually, you get two problems (that's why `Mixins` function exists).
-// 1. The result won't give you the combined type. Though you could use MergeMixins or ReClassify type to re-type it.
+// 1. The result won't give you the combined type. Though you could use MergeMixins or AsClass type to re-type it.
 // 2. You get problems with intermediate steps in the chain.
 // +  The core reason for these problems is that each pair is evaluated separately, not as a continuum.
 //
@@ -270,16 +274,16 @@ export class MyBase<Info extends Record<string, any> = {}> {
 }
 
 // 1. Declare an interface for local use.
-interface MyMixinClassInterface<Info extends Record<string, any> = {}> extends MyBase<Info> {
+interface _MyMixinClass<Info extends Record<string, any> = {}> extends MyBase<Info> {
 
    // Optional. Sync use with addMyMixinClass.
-   // .. Note. This example uses `MyMixinClassType<Info>` insteadof `ClassType<MyMixinClassInterface<Info>> & MyBaseType<Info>`.
+   // .. Note. This example uses `MyMixinClassType<Info>` insteadof `ClassType<_MyMixinClass<Info>> & MyBaseType<Info>`.
    ["constructor"]: MyMixinClassType<Info>;
 
    myMethod<Key extends keyof Info & string>(key: Key): Info[Key];
 }
 
-// 2. Declare the public mixin adder for MyMixinClass so that it returns class type of MyMixinClassInterface<Info>.
+// 2. Declare the public mixin adder for MyMixinClass so that it returns class type of _MyMixinClass<Info>.
 // .. In this example, we use `MyMixinClassType<Info>` as a shortcut.
 export function addMyMixinClass<Info extends Record<string, any> = {}>(Base: MyBaseType<Info>): MyMixinClassType<Info> {
    return class MyMixinClass extends Base {
@@ -288,8 +292,8 @@ export function addMyMixinClass<Info extends Record<string, any> = {}>(Base: MyB
 
        public info: Record<string, any>; // Or `info: Info;`
        
-        // Optional. Sync use with MyMixinClassInterface.
-        ["constructor"]: ClassType<MyMixinClassInterface<Info>>;
+        // Optional. Sync use with _MyMixinClass.
+        ["constructor"]: ClassType<_MyMixinClass<Info>>;
 
        // In the constructor use type explicitly.
        constructor(info: Info, ...args: any[]) {
@@ -306,12 +310,12 @@ export function addMyMixinClass<Info extends Record<string, any> = {}>(Base: MyB
 
 // 3. Optional: Declare stand-alone if wanted.
 export class MyMixinClass<Info extends Record<string, any> = {}> extends (addMyMixinClass(MyBase) as ClassType) { }
-export interface MyMixinClass<Info extends Record<string, any> = {}> extends MyMixinClassInterface<Info> { }
+export interface MyMixinClass<Info extends Record<string, any> = {}> extends _MyMixinClass<Info> { }
 // 4. Optional: The class type, too.
 // .. Then we can use it in the addMyMixinClass.
-// .. Otherwise should use `ClassType<MyMixinClassInterface<Info>> & MyBaseType<Info>`.
+// .. Otherwise should use `ClassType<_MyMixinClass<Info>> & MyBaseType<Info>`.
 export interface MyMixinClassType<Info extends Record<string, any> = {}> extends
-    ClassType<MyMixinClassInterface<Info>>, MyBaseType<Info>
+    ClassType<_MyMixinClass<Info>>, MyBaseType<Info>
 {
     STATIC_ONE: number;
 }
@@ -332,7 +336,7 @@ myMixinClass.constructor.STATIC_ZERO; // number
 ```typescript
 
 // If you use the above mixins and base class manually, you get two problems (that's why `MixinsWith` function exists).
-// 1. The result won't give you the combined type. Though you could use MergeMixins or ReClassify type to re-type it.
+// 1. The result won't give you the combined type. Though you could use MergeMixins or AsClass type to re-type it.
 // 2. You get problems with intermediate steps in the chain.
 // +  The core reason for these problems is that each pair is evaluated separately, not as a continuum.
 //
@@ -382,13 +386,13 @@ export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) 
 
 ```
 
-### Mixin TS helpers: ReClassify
+### Mixin TS helpers: AsClass
 
 ```typescript
 
 // - Arguments - //
 
-export type ReClassify<
+export type AsClass<
     Class, // Should refer to the type of the merged class type. For fluency type is any.
     Instance, // Should refer to the type of the merged class instance.
     // Optional. Can be used to define type constructor arguments for the resulting class.
@@ -399,7 +403,7 @@ export type ReClassify<
 // - Example - //
 
 // Declare type.
-type MyClassType = ReClassify<{ SOMETHING_STATIC: number; }, { instanced: boolean; }, [one: number, two?: boolean]>;
+type MyClassType = AsClass<{ SOMETHING_STATIC: number; }, { instanced: boolean; }, [one: number, two?: boolean]>;
 
 // Fake a class and instance on JS side.
 const MyClass = class MyClass { } as unknown as MyClassType;

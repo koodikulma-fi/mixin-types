@@ -1,10 +1,10 @@
 {
-  "name": "easy-mix",
+  "name": "mixin-types",
   "version": "1.0.0",
   "description": "Two simple JS functions (Mixins and MixinsWith) to handle mixins, and related TS tools supporting easy generic typing.",
   "keywords": [
     "EasyMix",
-    "easy-mix",
+    "mixin-types",
     "mixin",
     "class",
     "mixins",
@@ -18,21 +18,21 @@
     "tools",
     "library"
   ],
-  "homepage": "https://github.com/koodikulma-fi/easy-mix",
+  "homepage": "https://github.com/koodikulma-fi/mixin-types",
   "author": "Mikael Saurén",
   "license": "MIT",
   "private": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/koodikulma-fi/easy-mix.git"
+    "url": "git+https://github.com/koodikulma-fi/mixin-types.git"
   },
-  "module": "./easy-mix.module.js",
-  "main": "./easy-mix.js",
-  "types": "./easy-mix.d.ts",
+  "module": "./mixin-types.module.js",
+  "main": "./mixin-types.js",
+  "types": "./mixin-types.d.ts",
   "exports": {
     ".": {
-      "import": "./easy-mix.module.js",
-      "require": "./easy-mix.js"
+      "import": "./mixin-types.module.js",
+      "require": "./mixin-types.js"
     },
     "./package.json": "./package.json"
   }
