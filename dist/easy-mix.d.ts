@@ -220,8 +220,8 @@ type ReClassify<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<C
  * ```
  *
  * // Create mixins.
- * const addMixin1 = <Info extends any = {}>(Base: ClassType) => class Mixin1 extends Base { testMe(testInfo: Info): void {} }
- * const addMixin2 = <Info extends any = {}>(Base: ReturnType<typeof addMixin1<Info>>) => class Mixin2 extends Base { }
+ * const addMixin1 = <Info = {}>(Base: ClassType) => class Mixin1 extends Base { testMe(testInfo: Info): void {} }
+ * const addMixin2 = <Info = {}>(Base: ReturnType<typeof addMixin1<Info>>) => class Mixin2 extends Base { }
  *
  * // Create shortcuts for our tests below.
  * type MyInfo = { test: boolean; };
@@ -250,8 +250,8 @@ type EvaluateMixinChain<Mixins extends Array<any>, BaseClass extends ClassType =
  * ```
  *
  * // Create mixins.
- * const addMixin1 = <Info extends any = {}>(Base: ClassType) => class Mixin1 extends Base { testMe(testInfo: Info): void {} }
- * const addMixin2 = <Info extends any = {}>(Base: ReturnType<typeof addMixin1<Info>>) => class Mixin2 extends Base { static STATIC_ONE = 1; }
+ * const addMixin1 = <Info = {}>(Base: ClassType) => class Mixin1 extends Base { testMe(testInfo: Info): void {} }
+ * const addMixin2 = <Info = {}>(Base: ReturnType<typeof addMixin1<Info>>) => class Mixin2 extends Base { static STATIC_ONE = 1; }
  * const addMixin3 = (Base: ClassType) => class Mixin3 extends Base { name: string = ""; }
  *
  * // Merge the types manually.
