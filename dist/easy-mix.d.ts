@@ -1,8 +1,16 @@
 /** Helper to create a mixed class from a sequence of mixins in ascending order: `[addMixin1, addMixin2, ...]`.
  * - The typeguard evaluates each mixin up to 20 individually (by mixin form and implied requirements), the rest is not evaluated.
  * - Note that in cases where mixins are dependent on each other and support type arguments, provide them for all in the chain.
- * - For example:
  * ```
+ *
+ * // - Actual JS implementation - //
+ *
+ * // On the JS side, the feature is implemented like this.
+ * // .. For example: `class MyClass extends Mixins(addMixin1, addMixin2) { }`.
+ * export function Mixins(...mixins) {
+ *     return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Object);
+ * }
+ *
  *
  * // - Basic usage - //
  *
@@ -69,23 +77,22 @@
  *     }
  * }
  *
- *
- * // - Actual implementation - //
- *
- * // On the JS side, the feature is implemented like this.
- * // .. For example: `class MyClass extends Mixins(addMixin1, addMixin2) { }`.
- * export function Mixins(...mixins) {
- *     return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Object);
- * }
- *
  * ```
  */
 declare function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(...mixins: EvaluateMixinChain<Mixins>): MergeMixins<Mixins>;
 /** Helper to create a mixed class with a base class and a sequence of mixins in ascending order: `[Base, addMixin1, addMixin2, ...]`.
  * - The typeguard evaluates each mixin up to 20 individually (by mixin form and implied requirements), the rest is not evaluated.
  * - Note that in cases where mixins are dependent on each other and support type arguments, provide them for all in the chain, including the base class.
- * - For example:
  * ```
+ *
+ * // - Actual JS implementation - //
+ *
+ * // On the JS side, the feature is implemented like this.
+ * // .. For example: `class MyClass extends MixinsWith(BaseClass, addMixin1, addMixin2) { }`.
+ * export function MixinsWith(Base, ...mixins) {
+ *     return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Base);
+ * }
+ *
  *
  * // - Basic usage - //
  *
@@ -153,14 +160,6 @@ declare function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(..
  *    }
  * }
  *
- *
- * // - Actual implementation - //
- *
- * // On the JS side, the feature is implemented like this.
- * // .. For example: `class MyClass extends MixinsWith(BaseClass, addMixin1, addMixin2) { }`.
- * export function MixinsWith(Base, ...mixins) {
- *     return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Base);
- * }
  *
  * ```
  */

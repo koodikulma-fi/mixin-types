@@ -10,6 +10,6 @@
     "declarationDir": "./dist/dts",
     "strictNullChecks": true
   },
-  "include": ["./src/index.ts"],
+  "include": ["src/index.ts"],
   "exclude": ["node_modules"]
 }

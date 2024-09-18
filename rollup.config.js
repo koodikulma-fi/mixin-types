@@ -78,18 +78,7 @@ export default [
                 output: { quote_style: 1 }
             }),
             
-    //     ],
-    // },
-    //
-    //
-    // // - Delete - //
-    //
-    // // Delete the extras.
-    // {
-    //     input: 'dist/easy-mix.module.js',
-    //     plugins: [
-
-            del({ targets: ['dist/classes*', 'dist/library*', 'dist/index.js', 'dist/types.js'], hook: 'buildEnd' })
+            del({ targets: ['dist/index.js'], hook: 'buildEnd' })
         ]
     },
 
