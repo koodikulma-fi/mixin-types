@@ -14,7 +14,7 @@ The documentation below explains how to set up and use mixins in various circums
 2. Passing generic params from class (to simple mixins)
 3. Complex mixins and generic parameters
 4. Constructor arguments
-5. Using `instanceof`.
+5. Using `instanceof`
 
 ---
 
@@ -190,7 +190,7 @@ myClass.constructor.STATIC_ONE; // number
 - However, as things get more complex, you probably run into an issue with excessive deepness of the mixin types.
 - Solutions to overcome this issue easily lead to others. So below is the recommended approach:
     1. Issue with excessive deepness. -> Use explicit typing.
-    2. Issues with circular reference when using explicit typing. -> Use a core function vs. exported mixin creator.
+    2. Issues with circular reference when using explicit typing. -> Use a separate core + exported mixin creator.
     3. Minor issue with losing the type of the base class. -> Can use `typeof MyBase` or `AsMixin` helper.
 
 ### 1. Excessive deepness -> explicit typing
@@ -275,7 +275,9 @@ function _addSignalBoy(Base?: ClassType): ClassType {
     }
 }
 
-/** Add DataBoy features to a base class. Provide BaseClass type specifically (2nd arg) or use AsMixin type helper. */
+/** Add DataBoy features to a base class.
+ * - Provide BaseClass type specifically (2nd arg) or use AsMixin type helper.
+ */
 export function addSignalBoy<
     Signals extends SignalsRecord = {},
     BaseClass extends ClassType = ClassType
@@ -285,8 +287,13 @@ export function addSignalBoy<
 }
 
 // For more complex cases, it's recommended to use the pattern below with AsClass.
-/** Add DataBoy features to a base class. Provide BaseClass type specifically (2nd arg) or use AsMixin type helper. */
-export function addSignalBoy_ALT<Signals extends SignalsRecord = {}, BaseClass extends ClassType = ClassType>(Base: BaseClass): AsClass<
+/** Add DataBoy features to a base class.
+ * - Provide BaseClass type specifically (2nd arg) or use AsMixin type helper.
+ */
+export function addSignalBoy_ALT<
+    Signals extends SignalsRecord = {},
+    BaseClass extends ClassType = ClassType
+>(Base: BaseClass): AsClass<
     // Static.
     SignalBoyType<Signals> & BaseClass,
     // Instanced.
@@ -310,10 +317,46 @@ export function addSignalBoy_ALT<Signals extends SignalsRecord = {}, BaseClass e
 
 ```typescript
 
+// 0. MyBase and MySignals.
+type MySignals = { test: (num: number) => void; };
+class MyBase {
+    public name: string = "";
+}
 // 1. Just type it in using `typeof`.
 class MyMix1 extends addSignalBoy<MySignals, typeof MyBase>(MyBase) {}
 // 2. Or use `AsMixin` helper type.
 class MyMix2 extends (addSignalBoy as AsMixin<SignalBoy<MySignals>>)(MyBase) {}
+
+// In any case test.
+const myMix1 = new MyMix1();
+const myMix2 = new MyMix1();
+myMix1.listenTo("test", (num) => { });
+myMix2.listenTo("test", (num) => { });
+myMix1.sendSignal("test", 1);
+myMix2.sendSignal("test", 2);
+myMix1.name = "test";
+myMix2.name; // string;
+
+// To uplift MyMix to have generic parameters, just define class + interface, like done above.
+// .. Class extending ClassType.
+class MyMix<AddSignals extends SignalsRecord = {}> extends (SignalBoy(MyBase) as ClassType) {
+    // Just to define constructor explicitly. In our mixing chain, there's no construtor args.
+    constructor() {
+        super();
+    }
+}
+// .. Interface explicitly typed.
+interface MyMix<AddSignals extends SignalsRecord = {}> extends SignalBoy<MySignals & AddSignals>, MyBase { }
+
+// Test.
+const myMix = new MyMix<{ sendDescription: (title: string, content: string) => void; }>();
+myMix.name = "myMix";
+myMix.listenTo("test", num => {});
+myMix.listenTo("sendDescription", (title, content) => {});
+myMix.sendSignal("sendDescription", "Mixins", "So many things.");
+
+// And finally, if you need to make MyMix be a mixin in addition to class, just repeat what is done here for SignalBoy.
+
 
 ```
 
