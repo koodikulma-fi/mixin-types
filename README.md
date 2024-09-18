@@ -10,16 +10,16 @@
 The npm package can be found with: [mixin-types](https://www.npmjs.com/package/mixin-types). Contribute in GitHub: [koodikulma-fi/mixin-types.git](https://github.com/koodikulma-fi/mixin-types.git)
 
 The documentation below explains how to set up and use mixins in various circumstances.
-0. General guidelines
-1. Simple mixins
-2. Passing generic params from class (to simple mixins)
-3. Complex mixins and generic parameters
-4. Constructor arguments
-5. Using `instanceof`
+1. General guidelines
+2. Simple mixins
+3. Passing generic params from class (to simple mixins)
+4. Complex mixins and generic parameters
+5. Constructor arguments
+6. Using `instanceof`
 
 ---
 
-## 0. GENERAL GUIDELINES
+## 1. GENERAL GUIDELINES
 - For a clean overall mixin architecture, keep the purpose of each mixin simple and detached from each other.
 - If a mixin is dependent on another mixin, consider _including_ it, instead of _requiring_ it.
     * For example: `addMyBigMixin = (Base) => return class MyBigMixin extends addMySmallMixin(Base) { ... }`.
@@ -27,7 +27,7 @@ The documentation below explains how to set up and use mixins in various circums
 
 ---
 
-## 1. SIMPLE MIXINS
+## 2. SIMPLE MIXINS
 
 - For sequencing simple mixins, use the `Mixins` and `MixinsWith` methods.
 
@@ -62,7 +62,7 @@ class MyFail extends Mixins(addMixin3) { }
 
 // If you use the above mixins manually, you get two problems (that's why `Mixins` function exists).
 // 1. The result won't give you the combined type. Though you could use MergeMixins or AsClass type to re-type it.
-// 2. You get problems with intermediate steps in the chain.
+// 2. You get problems with intermediate steps in the chain - unless you specifically want it.
 // +  The core reason for these problems is that each pair is evaluated separately, not as a continuum.
 //
 class MyManualMix extends addMixin3<MyInfo>(addMixin2(addMixin1<MyInfo>(Object))) {
@@ -110,7 +110,7 @@ class MyFail extends MixinsWith(Object, addMixin2) { }
 
 // If you use the above mixins and base class manually, you get two problems (that's why `MixinsWith` function exists).
 // 1. The result won't give you the combined type. Though you could use MergeMixins or AsClass type to re-type it.
-// 2. You get problems with intermediate steps in the chain.
+// 2. You get problems with intermediate steps in the chain - unless you specifically want it.
 // +  The core reason for these problems is that each pair is evaluated separately, not as a continuum.
 //
 class MyManualMix extends addMixin3<MyInfo>(addMixin2<MyInfo>(addMixin1(MyBase<MyInfo>))) {
@@ -124,7 +124,7 @@ class MyManualMix extends addMixin3<MyInfo>(addMixin2<MyInfo>(addMixin1(MyBase<M
 
 ```
 
-## 2. PASSING GENERIC PARAMETERS FROM CLASS (TO SIMPLE MIXINS)
+## 3. PASSING GENERIC PARAMETERS FROM CLASS (TO SIMPLE MIXINS)
 - To pass in generic parameters from a class, there's an inherent problem: _Base class expressions cannot reference class type parameters_.
 - This problem can be overcome using the trick of declaring a matching `interface` for the new `class`.
 
@@ -193,7 +193,7 @@ myClass.constructor.STATIC_ONE; // number
 
 ---
 
-## 3. COMPLEX MIXINS AND GENERIC PARAMETERS
+## 4. COMPLEX MIXINS AND GENERIC PARAMETERS
 
 - As can be seen from examples above, even generic parameters work nice and easy.
 - However, as things get more complex, you probably run into an issue with excessive deepness of the mixin types.
@@ -374,7 +374,7 @@ myMix.sendSignal("sendDescription", "Mixins", "So many things.");
 
 ---
 
-## 4. CONSTRUCTOR ARGUMENTS
+## 5. CONSTRUCTOR ARGUMENTS
 - Generally speaking, you should prefer not using constructor arguments in mixins.
 - When you use them, keep them very simple, preferably just taking 1 argument - definitely not say, 1-3 arguments.
 - There's also inherentely insolvable cases for trying to automate how constructor arguments map out.
@@ -396,7 +396,7 @@ myMix.sendSignal("sendDescription", "Mixins", "So many things.");
 
 ---
 
-## 5. USING `instanceof` WITH MIXINS
+## 6. USING `instanceof` WITH MIXINS
 - Why it won't "work" the way you might initially expect.
 - Examples of working around.
     1. Conceptually, use mixins as tiny building blocks to compose your "main classes" and use instanceof only for them.
