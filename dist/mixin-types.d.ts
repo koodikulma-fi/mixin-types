@@ -443,15 +443,5 @@ type MergeMixinsWith<BaseClass extends ClassType, Mixins extends Array<(Base: Cl
  * - For example: `MixinsInstanceWith<typeof MyBaseClass, MixinsArray>`.
  */
 type MixinsInstanceWith<BaseClass extends ClassType, Mixins extends Array<(Base: ClassType) => ClassType>> = InstanceType<MergeMixins<Mixins, BaseClass, InstanceType<BaseClass>>>;
-interface _MyMixinClass<Info extends Record<string, any> = {}> {
-    ["constructor"]: ClassType<_MyMixinClass<Info>>;
-    myMethod<Key extends keyof Info & string>(key: Key): Info[Key];
-}
-declare function addMyMixinClass<Info extends Record<string, any> = {}>(Base: ClassType): ClassType<_MyMixinClass<Info>>;
-declare const MyMixinClass_base: ClassType<{}, any[]>;
-declare class MyMixinClass<Info extends Record<string, any> = {}> extends MyMixinClass_base {
-}
-interface MyMixinClass<Info extends Record<string, any> = {}> extends _MyMixinClass<Info> {
-}
 
-export { AsClass, AsMixin, ClassType, EvaluateMixinChain, GetConstructorArgs, GetConstructorReturn, IncludesValue, IterateBackwards, IterateForwards, MergeMixins, MergeMixinsWith, Mixins, MixinsInstance, MixinsInstanceWith, MixinsWith, MyMixinClass, addMyMixinClass };
+export { AsClass, AsMixin, ClassType, EvaluateMixinChain, GetConstructorArgs, GetConstructorReturn, IncludesValue, IterateBackwards, IterateForwards, MergeMixins, MergeMixinsWith, Mixins, MixinsInstance, MixinsInstanceWith, MixinsWith };
