@@ -1,0 +1,54 @@
+{
+  "name": "easy-mix",
+  "version": "1.0.0",
+  "description": "Two simple JS functions (Mixins and MixinsWith) to handle mixins, and related TS tools supporting easy generic typing.",
+  "keywords": [
+    "EasyMix",
+    "easy-mix",
+    "mixin",
+    "class",
+    "mixins",
+    "classes",
+    "simple",
+    "mixer",
+    "javascript",
+    "typescript",
+    "js",
+    "ts",
+    "tools",
+    "library"
+  ],
+  "homepage": "https://github.com/koodikulma-fi/easy-mix",
+  "author": "Mikael Saurén",
+  "license": "MIT",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koodikulma-fi/easy-mix.git"
+  },
+  "module": "./easy-mix.module.js",
+  "main": "./easy-mix.js",
+  "types": "./easy-mix.d.ts",
+  "exports": {
+    ".": {
+      "import": "./easy-mix.module.js",
+      "require": "./easy-mix.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "tsc": "tsc -p tsconfig.json",
+    "build": "tsc && rollup -c rollup.config.js"
+  },
+  "devDependencies": {
+    "rollup": "^2.77.2",
+    "rollup-plugin-delete": "^2.0.0",
+    "rollup-plugin-dts": "^4.2.2",
+    "rollup-plugin-terser": "^7.0.2",
+    "typescript": "4.9"
+  }
+}
