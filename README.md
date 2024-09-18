@@ -286,6 +286,9 @@ export function addMyMixinClass<Info extends Record<string, any> = {}>(Base: MyB
        public static STATIC_ONE: number = 1;
 
        public info: Record<string, any>; // Or `info: Info;`
+       
+        // Optional. Sync use with MyMixinClassInterface.
+        ["constructor"]: ClassType<MyMixinClassInterface<Info>>;
 
        // In the constructor use type explicitly.
        constructor(info: Info, ...args: any[]) {

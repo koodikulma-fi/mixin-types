@@ -225,6 +225,9 @@ declare function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(..
  *
  *        public info: Record<string, any>; // Or `info: Info;`
  *
+ *        // Optional. Sync use with MyMixinClassInterface.
+ *        ["constructor"]: MyMixinClassType<Info>;
+ *
  *        // In the constructor use type explicitly.
  *        constructor(info: Info, ...args: any[]) {
  *            super(...args);
