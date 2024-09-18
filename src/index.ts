@@ -38,7 +38,7 @@
  * class MyFail extends Mixins(addMixin3) { }
  * 
  * 
- * // - Passing generic parameters - //
+ * // - Passing generic parameters (simple) - //
  * 
  * // You might want to pass the Info arg further to a mixed base, but TS won't allow it. 
  * // .. In the lines below, <Info> is red-underlined, as base class expressions cannot ref. class type params.
@@ -62,6 +62,51 @@
  * myClass.testMe({ something: false }); // Requires `MyInfo`.
  * const value = myClass.myMethod("something"); // Requires `keyof MyInfo & string`. Returns `number`.
  * myClass.num === value; // The type is `boolean`, and outcome `true` on JS side.
+ * 
+ * 
+ * // - Passing generic parameters (complex) - //
+ * 
+ * // However, TypeScript may start to complain about the deepness of the dynamic class type.
+ * // .. To provide explicit typing without circularity, we can do the following trick.
+ * 
+ * // 1. Declare an interface for local use.
+ * interface MyMixinClassInterface<Info extends Record<string, any> = {}> {
+ * 
+ *     // Optional. Sync use with addMyMixinClass.
+ *     ["constructor"]: ClassType<MyMixinClassInterface<Info>>;
+ * 
+ *     myMethod<Key extends keyof Info & string>(key: Key): Info[Key];
+ * }
+ * 
+ * // 2. Declare the public mixin adder for MyMixinClass so that it returns class type of MyMixinClassInterface<Info>.
+ * export function addMyMixinClass<Info extends Record<string, any> = {}>(Base: ClassType): ClassType<MyMixinClassInterface<Info>> {
+ *     return class MyMixinClass extends Base {
+ *         
+ *         // Optional. Sync use with MyMixinClassInterface.
+ *         ["constructor"]: ClassType<MyMixinClassInterface<Info>>;
+ * 
+ *         info: Record<string, any>; // Or `info: Info;`
+ * 
+ *         // In the constructor use type explicitly.
+ *         constructor(info: Info, ...args: any[]) {
+ *             super(...args);
+ *             this.info = info;
+ *         }
+ * 
+ *         myMethod(key: string): any {
+ *             return this.info
+ *         }
+ * 
+ *     } as any; // In more complex cases you need this or other such.
+ * }
+ * 
+ * // Declare stand-alone if wanted.
+ * export class MyMixinClass<Info extends Record<string, any> = {}> extends (addMyMixinClass(Object) as ClassType) { }
+ * export interface MyMixinClass<Info extends Record<string, any> = {}> extends MyMixinClassInterface<Info> { }
+ * 
+ * // Test.
+ * const myMixinClass = new MyMixinClass<{ test: boolean; }>();
+ * const value = myMixinClass.myMethod("test"); // Requires `"test"` and returns `boolean`.
  * 
  * 
  * // - About mixing manually - //
@@ -124,7 +169,7 @@ export function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(...
  * class MyFail extends MixinsWith(Object, addMixin2) { }
  * 
  * 
- * // - Passing generic parameters - //
+ * // - Passing generic parameters (simple) - //
  * 
  * // You might want to pass the Info arg further to a mixed base, but TS won't allow it. 
  * // .. In the lines below, both <Info> are red-underlined, as base class expressions cannot ref. class type params.
@@ -148,6 +193,76 @@ export function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(...
  * myClass.testInfo({ something: true });// Requires `MyInfo`.
  * myClass.someMember = 3; // Requires `number`.
  * myClass.constructor.STATIC_ONE; // number
+ * 
+ * 
+ * // - Passing generic parameters (complex) - //
+ * 
+ * // However, TypeScript may start to complain about the deepness of the dynamic class type.
+ * // .. To provide explicit typing without circularity, we can do the following trick.
+ * 
+ * // 0. Declare base class.
+ * export interface MyBaseType<Info extends Record<string, any> = {}> extends ClassType<MyBase<Info>> {
+ *     STATIC_ZERO: number;
+ * }
+ * export class MyBase<Info extends Record<string, any> = {}> {
+ *     public static STATIC_ZERO: number = 0;
+ *     public myMember: number = 0;
+ *     public useInfo(info: Info): void { }
+ *     // Optional.
+ *     ["constructor"]: MyBaseType<Info>;
+ * }
+ * 
+ * // 1. Declare an interface for local use.
+ * interface MyMixinClassInterface<Info extends Record<string, any> = {}> extends MyBase<Info> {
+ * 
+ *    // Optional. Sync use with addMyMixinClass.
+ *    // .. Note. This example uses `MyMixinClassType<Info>` insteadof `ClassType<MyMixinClassInterface<Info>> & MyBaseType<Info>`.
+ *    ["constructor"]: MyMixinClassType<Info>;
+ * 
+ *    myMethod<Key extends keyof Info & string>(key: Key): Info[Key];
+ * }
+ * 
+ * // 2. Declare the public mixin adder for MyMixinClass so that it returns class type of MyMixinClassInterface<Info>.
+ * export function addMyMixinClass<Info extends Record<string, any> = {}>(Base: MyBaseType<Info>): MyMixinClassType<Info> {
+ *    return class MyMixinClass extends Base {
+ *        
+ *        public static STATIC_ONE: number = 1;
+ * 
+ *        public info: Record<string, any>; // Or `info: Info;`
+ * 
+ *        // In the constructor use type explicitly.
+ *        constructor(info: Info, ...args: any[]) {
+ *            super(...args);
+ *            this.info = info;
+ *        }
+ * 
+ *        public myMethod(key: string): any {
+ *            return this.info
+ *        }
+ * 
+ *    } as any; // In more complex cases you need this or other such.
+ * }
+ * 
+ * // 3. Optional: Declare stand-alone if wanted.
+ * export class MyMixinClass<Info extends Record<string, any> = {}> extends (addMyMixinClass(MyBase) as ClassType) { }
+ * export interface MyMixinClass<Info extends Record<string, any> = {}> extends MyMixinClassInterface<Info> { }
+ * // 4. Optional: The class type, too.
+ * // .. Then we can use it in the addMyMixinClass.
+ * // .. Otherwise should use `ClassType<MyMixinClassInterface<Info>> & MyBaseType<Info>`.
+ * export interface MyMixinClassType<Info extends Record<string, any> = {}> extends
+ *     ClassType<MyMixinClassInterface<Info>>, MyBaseType<Info>
+ * {
+ *     STATIC_ONE: number;
+ * }
+ * 
+ * // Test.
+ * type MyInfo = { test: boolean; };
+ * const myMixinClass = new MyMixinClass<MyInfo>();
+ * const value = myMixinClass.myMethod("test"); // Requires `"test"` and returns `boolean`.
+ * myMixinClass.myMember; // number
+ * myMixinClass.useInfo({ test: false }); // Requires `MyInfo`.
+ * myMixinClass.constructor.STATIC_ONE; // number
+ * myMixinClass.constructor.STATIC_ZERO; // number
  * 
  * 
  * // - About mixing manually - //
