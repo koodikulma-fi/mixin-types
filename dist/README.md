@@ -25,7 +25,7 @@ The documentation below explains how to set up and use mixins in various circums
     * For example: `addMyBigMixin = (Base) => return class MyBigMixin extends addMySmallMixin(Base) { ... }`.
 - Keep constructor arguments clean and minimal (and their count fixed), or preferably don't use them at all.
 - Finally, use mixins as simple base blocks to create your "final" classes. Don't use mixins excessively.
-- That said, mixins can be wonderfully useful and provide an easy way to avoid duplicating classes and features.
+- That said, mixins can be wonderfully useful and provide an easy way to avoid writing same code many times.
 
 ---
 
