@@ -15,9 +15,9 @@ The npm package can be found with: [easy-mix](https://www.npmjs.com/package/easy
 
 ## Mixins function
 
-- Helper to create a mixed class from a sequence of mixins in ascending order: `[FirstMixin, SecondMixin, ...]`.
+- Helper to create a mixed class from a sequence of mixins in ascending order: `[addMixin1, addMixin2, ...]`.
 - The typeguard evaluates up to mixins (by mixin form and implied requirements), the rest is not evaluated.
-- In cases where mixins are dependent on each other and support type arguments, provide them for all in the chain.
+- In cases where mixins are dependent on each other and support type arguments, provide them for all involved.
 
 ### Actual JS implementation
 
@@ -117,7 +117,7 @@ class MyManualMix extends addMixin3<MyInfo>(addMixin2(addMixin1<MyInfo>(Object))
 
 ## MixinsWith function
 
-- Helper to create a mixed class with a base class and a sequence of mixins in ascending order: [Base, FirstMixin, SecondMixin, ...].
+- Helper to create a mixed class with a base class and a sequence of mixins in ascending order: `[Base, addMixin1, addMixin2, ...]`.
 - The typeguard evaluates each mixin up to 20 individually (by mixin form and implied requirements), the rest is not evaluated.
 - Note that in cases where mixins are dependent on each other and support type arguments, provide them for all in the chain, including the base class.
 
