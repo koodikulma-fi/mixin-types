@@ -9,7 +9,7 @@ The npm package can be found with: [easy-mix](https://www.npmjs.com/package/easy
 
 ## TODO
 
-- About info about ARGUMENTS in the constructors.
+- Add info about ARGUMENTS in the constructors.
 
 ---
 
@@ -148,8 +148,7 @@ const addMixin1 = (Base: ClassType) => class Mixin1 extends Base {
 const addMixin2 = <Info = {}>(Base: typeof MyBase<Info>) => class Mixin2 extends Base {
     enabled: boolean = false;
 }
-const addMixin3 = <Info = {}>(Base: ReturnType<typeof addMixin2<Info>>) =>
-    class Mixin3 extends Base { }
+const addMixin3 = <Info = {}>(Base: ReturnType<typeof addMixin2<Info>>) => class Mixin3 extends Base { }
 
 // Create a mixed class.
 // .. Provide MyInfo systematically to all that use it. Otherwise you get `unknown` for the related type.

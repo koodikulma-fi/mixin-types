@@ -192,20 +192,12 @@ export type IterateBackwards = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
 export type IterateForwards = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...never[]];
 
 // Class tools.
+/** Get the type for class from class instance - the opposite of `InstanceType`. Optionally define constructor args. */
+export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
 /** Get the type for class constructor arguments. */
 export type GetConstructorArgs<T> = T extends new (...args: infer U) => any ? U : never;
 /** Get the type for class constructor return. */
 export type GetConstructorReturn<T> = T extends new (...args: any[]) => infer U ? U : never;
-/** Get the type for class from class instance - the opposite of `InstanceType`. Optionally define constructor args. */
-export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
-
-// // Mixin tools.
-// /** Typing to extend mixins.
-//  * @param TExtends Should refer to the class type of the mixin.
-//  * @returns The returned type is a mixin creator, essentially: `(Base: TBase) => TBase & TExtends`.
-//  */
-// export type ClassMixer<TExtends extends ClassType> =
-//     <TBase extends ClassType>(Base: TBase) => Omit<TBase & TExtends, "new"> & { new (...args: GetConstructorArgs<TExtends>): GetConstructorReturn<TBase> & GetConstructorReturn<TExtends>; };
 
 // Re-type class.
 /** Typing to re-create a clean class type using separated Class and Instance types, and ConstructorArgs. For example:

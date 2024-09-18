@@ -177,12 +177,12 @@ type IterateBackwards = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
  * - When used, should not input negative, but go up from 0 until `Arr["length"]`.
  */
 type IterateForwards = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...never[]];
+/** Get the type for class from class instance - the opposite of `InstanceType`. Optionally define constructor args. */
+type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
 /** Get the type for class constructor arguments. */
 type GetConstructorArgs<T> = T extends new (...args: infer U) => any ? U : never;
 /** Get the type for class constructor return. */
 type GetConstructorReturn<T> = T extends new (...args: any[]) => infer U ? U : never;
-/** Get the type for class from class instance - the opposite of `InstanceType`. Optionally define constructor args. */
-type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
 /** Typing to re-create a clean class type using separated Class and Instance types, and ConstructorArgs. For example:
  *
  * ```
