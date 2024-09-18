@@ -289,7 +289,9 @@ export type EvaluateMixinChain<
 // - Example - //
 
 // Create mixins.
-const addMixin1 = <Info extends any = {}>(Base: ClassType) => class Mixin1 extends Base { testMe(testInfo: Info): void {} }
+const addMixin1 = <Info extends any = {}>(Base: ClassType) => class Mixin1 extends Base {
+    testMe(testInfo: Info): void {}
+}
 const addMixin2 = <Info extends any = {}>(Base: ReturnType<typeof addMixin1<Info>>) => class Mixin2 extends Base { }
 
 // Create shortcuts for our tests below.
@@ -332,9 +334,15 @@ type MergeMixins<
 // - Example - //
 
 // Create mixins.
-const addMixin1 = <Info extends any = {}>(Base: ClassType) => class Mixin1 extends Base { testMe(testInfo: Info): void {} }
-const addMixin2 = <Info extends any = {}>(Base: ReturnType<typeof addMixin1<Info>>) => class Mixin2 extends Base { static STATIC_ONE = 1; }
-const addMixin3 = (Base: ClassType) => class Mixin3 extends Base { name: string = ""; }
+const addMixin1 = <Info extends any = {}>(Base: ClassType) => class Mixin1 extends Base {
+    testMe(testInfo: Info): void {}
+}
+const addMixin2 = <Info extends any = {}>(Base: ReturnType<typeof addMixin1<Info>>) => class Mixin2 extends Base {
+    static STATIC_ONE = 1;
+}
+const addMixin3 = (Base: ClassType) => class Mixin3 extends Base {
+    name: string = "";
+}
 
 // Merge the types manually.
 type MyInfo = { test: boolean; };
@@ -375,15 +383,21 @@ export type MixinsInstance<
 // - Example - //
 
 // 0. Create a mixin.
-const addMixin1 = <Info = {}>(Base: ClassType) => class Mixin1 extends Base { num: number = 5; testMe(testInfo: Info): void {} }
+const addMixin1 = <Info = {}>(Base: ClassType) => class Mixin1 extends Base {
+    num: number = 5;
+    testMe(testInfo: Info): void {}
+}
 
 // 1. Create a mixed class.
 class MyClass<Info extends Record<string, any> = {}> extends (Mixins(addMixin1) as ClassType) {
-    myMethod(key: keyof Info & string): number { return this.num; } // `num` is a recognized class member.
+    myMethod(key: keyof Info & string): number {
+        return this.num; // `num` is a recognized class member.
+    }
 }
 
 // 2. Create a matching interface extending what we actually want to extend.
-interface MyClass<Info extends Record<string, any> = {}> extends MixinsInstance<[typeof addMixin1<Info>]> { }
+interface MyClass<Info extends Record<string, any> = {}>
+    extends MixinsInstance<[typeof addMixin1<Info>]> { }
 
 // Test.
 type MyInfo = { something: boolean; };
@@ -431,16 +445,26 @@ export type MixinsInstanceWith<
 // - Example - //
 
 // 0. Create a base class and a mixin.
-class MyBase<Info = {}> { testInfo(info: Info): void {} static STATIC_ONE = 1; }
-const addMixin1 = (Base: ClassType) => class Mixin1 extends Base { someMember: number = 5; }
+class MyBase<Info = {}> {
+    static STATIC_ONE = 1;
+    testInfo(info: Info): void {}
+}
+const addMixin1 = (Base: ClassType) => class Mixin1 extends Base {
+    someMember: number = 5;
+}
 
 // 1. Create a mixed class.
-class MyClass<Info extends Record<string, any> = {}> extends (MixinsWith(MyBase, addMixin1) as ClassType) {
-    myMethod(key: keyof Info & string): number { return this.someMember; } // `someMember` is a recognized class member.
+class MyClass<Info extends Record<string, any> = {}>
+    extends (MixinsWith(MyBase, addMixin1) as ClassType)
+{
+    myMethod(key: keyof Info & string): number {
+        return this.someMember; // `someMember` is a recognized class member.
+    }
 }
 
 // 2. Create a matching interface extending what we actually want to extend.
-interface MyClass<Info extends Record<string, any> = {}> extends MixinsInstanceWith<typeof MyBase<Info>, [typeof addMixin1]> { }
+interface MyClass<Info extends Record<string, any> = {}>
+    extends MixinsInstanceWith<typeof MyBase<Info>, [typeof addMixin1]> { }
 
 // Test the result, and prove the claim in step 2.
 type MyInfo = { something: boolean; };
