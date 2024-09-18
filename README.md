@@ -7,12 +7,29 @@ The npm package can be found with: [easy-mix](https://www.npmjs.com/package/easy
 
 ---
 
+## TODO
+
+- About info about ARGUMENTS in the constructors.
+
+---
+
 ## Mixins function
 
 - Helper to create a mixed class from a sequence of mixins in ascending order: `[FirstMixin, SecondMixin, ...]`.
 - The typeguard evaluates up to mixins (by mixin form and implied requirements), the rest is not evaluated.
 - In cases where mixins are dependent on each other and support type arguments, provide them for all in the chain.
 
+### Actual JS implementation
+
+```typescript
+
+// On the JS side, the feature is implemented like this.
+// .. For example: `class MyClass extends Mixins(addMixin1, addMixin2) { }`.
+export function Mixins(...mixins) {
+    return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Object);
+}
+
+```
 ### Basic usage
 
 ```typescript
@@ -96,17 +113,6 @@ class MyManualMix extends addMixin3<MyInfo>(addMixin2(addMixin1<MyInfo>(Object))
 
 ```
 
-### Actual JS implementation
-
-```typescript
-
-// On the JS side, the feature is implemented like this.
-export function MixinsWith(...mixins) {
-    return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Object);
-}
-
-```
-
 ---
 
 ## MixinsWith function
@@ -114,6 +120,18 @@ export function MixinsWith(...mixins) {
 - Helper to create a mixed class with a base class and a sequence of mixins in ascending order: [Base, FirstMixin, SecondMixin, ...].
 - The typeguard evaluates each mixin up to 20 individually (by mixin form and implied requirements), the rest is not evaluated.
 - Note that in cases where mixins are dependent on each other and support type arguments, provide them for all in the chain, including the base class.
+
+### Actual JS implementation
+
+```typescript
+
+// On the JS side, the feature is implemented like this.
+// .. For example: `class MyClass extends MixinsWith(BaseClass, addMixin1, addMixin2) { }`.
+export function MixinsWith(Base, ...mixins) {
+    return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Base);
+}
+
+```
 
 ### Basic usage
 
@@ -199,17 +217,6 @@ class MyManualMix extends addMixin3<MyInfo>(addMixin2<MyInfo>(addMixin1(MyBase<M
         this.someMember = 8; // someMember is red-underlined because because not existing.
         this.enabled; // boolean; // It's correct.
     }
-}
-
-```
-
-### Actual JS implementation
-
-```typescript
-
-// On the JS side, the feature is implemented like this.
-export function MixinsWith(Base, ...mixins) {
-    return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Base);
 }
 
 ```
