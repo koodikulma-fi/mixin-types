@@ -58,7 +58,7 @@ class MyClass<Info extends Record<string, any> = {}> extends (Mixins(addMixin1) 
 // 2. Create a matching interface extending what we actually want to extend.
 // .. Another remarkable thing is that there's no need to actually retype the class in the interface.
 //
-interface MyClass<Info extends Record<string, any> = {}> extends InstanceType<MergeMixins<[typeof addMixin1<Info>]>> { }
+interface MyClass<Info extends Record<string, any> = {}> extends MixinsInstance<[typeof addMixin1<Info>]> { }
 // .. The line below would work equally well for a single mixin case like this.
 // interface MyClass<Info extends Record<string, any> = {}> extends InstanceType<ReturnType<typeof addMixin1<Info>>> { }
 
@@ -160,7 +160,7 @@ class MyClass<Info extends Record<string, any> = {}> extends (MixinsWith(MyBase,
 // 2. Create a matching interface extending what we actually want to extend.
 // .. Another remarkable thing is that there's no need to actually retype the class in the interface. Just declare it.
 //
-interface MyClass<Info extends Record<string, any> = {}> extends InstanceType<MergeMixinsWith<typeof MyBase<Info>, [typeof addMixin1]>> { }
+interface MyClass<Info extends Record<string, any> = {}> extends MixinsInstanceWith<typeof MyBase<Info>, [typeof addMixin1]> { }
 
 // Test the result, and prove the claim in step 2.
 const myClass = new MyClass<MyInfo>();
@@ -243,7 +243,7 @@ export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) 
 ### Mixin TS helpers: ReClassify
 
 ```typescript
- 
+
 // - Arguments - //
 
 export type ReClassify<
@@ -355,6 +355,43 @@ mergedClass.testMe({ test: 5 }); // Fails - "test" is red-underlined. It's `unkn
 mergedClass.constructor.STATIC_ONE; // number
 mergedClass.name = "Mergy";
 
+```
+
+### Mixin TS helpers: `MixinsInstance<Mixins, Class?, Instance?>`
+- Exactly like MergeMixins (see its notes) but returns the instance type. Useful for creating a class interface.
+
+```typescript
+
+// - Arguments - //
+
+export type MixinsInstance<
+    Mixins extends Array<(Base: ClassType) => ClassType>,
+    // Optional. Can be used to define the type of the Base class.
+    Class extends Object = {},
+    Instance extends Object = {},
+> = InstanceType<MergeMixins<Mixins, Class, Instance>>;
+
+
+// - Example - //
+
+// 0. Create a mixin.
+const addMixin1 = <Info = {}>(Base: ClassType) => class Mixin1 extends Base { num: number = 5; testMe(testInfo: Info): void {} }
+
+// 1. Create a mixed class.
+class MyClass<Info extends Record<string, any> = {}> extends (Mixins(addMixin1) as ClassType) {
+    myMethod(key: keyof Info & string): number { return this.num; } // `num` is a recognized class member.
+}
+
+// 2. Create a matching interface extending what we actually want to extend.
+interface MyClass<Info extends Record<string, any> = {}> extends MixinsInstance<[typeof addMixin1<Info>]> { }
+
+// Test.
+type MyInfo = { something: boolean; };
+const myClass = new MyClass<MyInfo>();
+myClass.testMe({ something: false }); // Requires `MyInfo`.
+const value = myClass.myMethod("something"); // Requires `keyof MyInfo & string`. Returns `number`.
+myClass.num === value; // The type is `boolean`, and outcome `true` on JS side.
+
 
 ```
 
@@ -375,5 +412,42 @@ export type MergeMixinsWith<
 
 class MyBaseClass { }
 type MyBaseMix = MergeMixinsWith<typeof MyBaseClass, MyMixinsArray>;
+
+```
+
+### Mixin TS helpers: `MixinsInstanceWith<BaseClass, Mixins>`
+- Exactly like MergeMixinsWith (see its notes) but returns the instance type. Useful for creating a class interface.
+
+```typescript
+
+// - Arguments - //
+
+export type MixinsInstanceWith<
+    BaseClass extends ClassType,
+    Mixins extends Array<(Base: ClassType) => ClassType>
+> = InstanceType<MergeMixins<Mixins, BaseClass, InstanceType<BaseClass>>>;
+
+
+// - Example - //
+
+// 0. Create a base class and a mixin.
+class MyBase<Info = {}> { testInfo(info: Info): void {} static STATIC_ONE = 1; }
+const addMixin1 = (Base: ClassType) => class Mixin1 extends Base { someMember: number = 5; }
+
+// 1. Create a mixed class.
+class MyClass<Info extends Record<string, any> = {}> extends (MixinsWith(MyBase, addMixin1) as ClassType) {
+    myMethod(key: keyof Info & string): number { return this.someMember; } // `someMember` is a recognized class member.
+}
+
+// 2. Create a matching interface extending what we actually want to extend.
+interface MyClass<Info extends Record<string, any> = {}> extends MixinsInstanceWith<typeof MyBase<Info>, [typeof addMixin1]> { }
+
+// Test the result, and prove the claim in step 2.
+type MyInfo = { something: boolean; };
+const myClass = new MyClass<MyInfo>();
+const value = myClass.myMethod("something"); // Requires `keyof MyInfo & string`. Returns `number`.
+myClass.testInfo({ something: true });// Requires `MyInfo`.
+myClass.someMember = 3; // Requires `number`.
+myClass.constructor.STATIC_ONE; // number
 
 ```

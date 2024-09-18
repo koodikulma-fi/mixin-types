@@ -345,6 +345,16 @@ export type MergeMixins<
     // More to go.
     MergeMixins<Mixins, Class & ReturnType<Mixins[Index]>, Instance & InstanceType<ReturnType<Mixins[Index]>>, IterateForwards[Index]>;
 
+/** This is exactly like MergeMixins (see its notes) but returns the instance type. Useful for creating a class interface.
+ * - For example: `MixinsInstance<MixinsArray>`.
+ */
+export type MixinsInstance<
+    Mixins extends Array<(Base: ClassType) => ClassType>,
+    Class extends Object = {},
+    Instance extends Object = {},
+> = InstanceType<MergeMixins<Mixins, Class, Instance>>;
+
+// With base class.
 /** This is exactly like MergeMixins (see its notes) but allows to input the class type of the base class for the mixin chain.
  * - To get the type of the class use `typeof MyBaseClass`, where MyBaseClass is a JS class: `class MyBaseClass {}`.
  * - For example: `MergeMixinsWith<typeof MyBaseClass, MixinsArray>`.
@@ -353,3 +363,11 @@ export type MergeMixinsWith<
     BaseClass extends ClassType,
     Mixins extends Array<(Base: ClassType) => ClassType>
 > = MergeMixins<Mixins, BaseClass, InstanceType<BaseClass>>;
+
+/** This is exactly like MergeMixinsWith (see its notes) but returns the instance type. Useful for creating a class interface.
+ * - For example: `MixinsInstanceWith<typeof MyBaseClass, MixinsArray>`.
+ */
+export type MixinsInstanceWith<
+    BaseClass extends ClassType,
+    Mixins extends Array<(Base: ClassType) => ClassType>
+> = InstanceType<MergeMixins<Mixins, BaseClass, InstanceType<BaseClass>>>;
