@@ -221,7 +221,7 @@ export interface SignalBoy<Signals extends SignalsRecord = {}> {
     // Optionally further define the static side, for extra external fluency.
     ["constructor"]: SignalBoyType<Signals>;
     // Members.
-    signals: Record<string, Array<SignalListener>> = {};
+    signals: Record<string, Array<(...args: any[]) => void>>;
     // Let's define the typed methods here.
     listenTo<Name extends string & keyof Signals>(name: Name, callback: Signals[Name], extraArgs?: any[] | null): void;
     sendSignal<Name extends string & keyof Signals>(name: Name, ...args: Parameters<Signals[Name]>): void;
@@ -264,10 +264,10 @@ function addSignalBoy_CIRCULAR<Data = {}, TBase extends ClassType = ClassType>(B
 function _addSignalBoy(Base?: ClassType): ClassType {
     
     // Return extended class using simple non-typed variants inside.
-    return class _SignalBoy extends Base {
+    return class _SignalBoy extends (Base || Object) {
 
         public static DEFAULT_TIMEOUT: number | null = 0;
-        public signals: Record<string, Array<SignalListener>> = {};
+        public signals: Record<string, Array<(...args: any[]) => void>> = {};
 
         public listenTo(name: string, callback: (...args: any[]) => void, extraArgs?: any[]): void {
             // Here would be JS implementation.
@@ -353,7 +353,7 @@ myMix2.name; // string;
 
 // To uplift MyMix to have generic parameters, just define class + interface, like done above.
 // .. Class extending ClassType.
-class MyMix<AddSignals extends SignalsRecord = {}> extends (SignalBoy(MyBase) as ClassType) {
+class MyMix<AddSignals extends SignalsRecord = {}> extends (addSignalBoy(MyBase) as ClassType) {
     // Just to define constructor explicitly. In our mixing chain, there's no constructor args.
     constructor() {
         super();
@@ -368,6 +368,7 @@ myMix.name = "myMix";
 myMix.listenTo("test", num => {});
 myMix.listenTo("sendDescription", (title, content) => {});
 myMix.sendSignal("sendDescription", "Mixins", "So many things.");
+myMix.constructor.DEFAULT_TIMEOUT; // number | null
 
 // And finally, if you need to make MyMix be a mixin in addition to class, just repeat what is done here for SignalBoy.
 
