@@ -11,11 +11,6 @@ The npm package can be found with: [easy-mix](https://www.npmjs.com/package/easy
 
 - Add info about ARGUMENTS in the constructors.
 - Add notes about `instanceof` usage.
-- Add info about an extra trick when types get complex:
-    1. eg. DataManType + DataMan + DataManInterface
-    2. So we do ... `function addDataMan<Data>(Base: ClassType): DataManInterface<Data> { return class DataMan extends Base { } as any; }`
-    3. And we keep the typing inside addDataMan loose, while provide explicit typing in DataManInterface.
-    4. The DataManType simply refers to the class type.
 
 ---
 
