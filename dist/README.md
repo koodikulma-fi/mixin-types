@@ -100,7 +100,7 @@ myClass.num === value; // The type is `boolean`, and outcome `true` on JS side.
 // However, TypeScript may start to complain about the deepness of the dynamic class type.
 // .. To provide explicit typing without circularity, we can do the following trick.
 
-/** Only for local use. */
+// 1. Declare an interface for local use.
 interface MyMixinClassInterface<Info extends Record<string, any> = {}> {
 
     // Optional. Sync use with addMyMixinClass.
@@ -109,7 +109,7 @@ interface MyMixinClassInterface<Info extends Record<string, any> = {}> {
     myMethod<Key extends keyof Info & string>(key: Key): Info[Key];
 }
 
-/** The public mixin adder for MyMixinClass. */
+// 2. Declare the public mixin adder for MyMixinClass so that it returns class type of MyMixinClassInterface<Info>.
 export function addMyMixinClass<Info extends Record<string, any> = {}>(Base: ClassType): ClassType<MyMixinClassInterface<Info>> {
     return class MyMixinClass extends Base {
         
@@ -279,6 +279,7 @@ interface MyMixinClassInterface<Info extends Record<string, any> = {}> extends M
 }
 
 // 2. Declare the public mixin adder for MyMixinClass so that it returns class type of MyMixinClassInterface<Info>.
+// .. In this example, we use `MyMixinClassType<Info>` as a shortcut.
 export function addMyMixinClass<Info extends Record<string, any> = {}>(Base: MyBaseType<Info>): MyMixinClassType<Info> {
    return class MyMixinClass extends Base {
        

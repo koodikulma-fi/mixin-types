@@ -223,6 +223,7 @@ export function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(...
  * }
  * 
  * // 2. Declare the public mixin adder for MyMixinClass so that it returns class type of MyMixinClassInterface<Info>.
+ * // .. In this example, we use `MyMixinClassType<Info>` as a shortcut.
  * export function addMyMixinClass<Info extends Record<string, any> = {}>(Base: MyBaseType<Info>): MyMixinClassType<Info> {
  *    return class MyMixinClass extends Base {
  *        
