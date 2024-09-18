@@ -128,7 +128,7 @@ export function addMyMixinClass<Info extends Record<string, any> = {}>(Base: Cla
             return this.info
         }
 
-    }
+    } as any; // Needed for complex cases.
 }
 
 // Declare stand-alone if wanted.
@@ -297,7 +297,7 @@ export function addMyMixinClass<Info extends Record<string, any> = {}>(Base: MyB
            return this.info
        }
 
-   } as any; // In more complex cases you need this or other such.
+   } as any; // Needed for complex cases.
 }
 
 // 3. Optional: Declare stand-alone if wanted.

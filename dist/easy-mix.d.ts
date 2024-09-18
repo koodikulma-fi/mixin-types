@@ -94,7 +94,7 @@
  *             return this.info
  *         }
  *
- *     } as any; // In more complex cases you need this or other such.
+ *    } as any; // Needed for complex cases.
  * }
  *
  * // Declare stand-alone if wanted.
@@ -235,7 +235,7 @@ declare function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(..
  *            return this.info
  *        }
  *
- *    } as any; // In more complex cases you need this or other such.
+ *    } as any; // Needed for complex cases.
  * }
  *
  * // 3. Optional: Declare stand-alone if wanted.
