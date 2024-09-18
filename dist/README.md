@@ -246,13 +246,7 @@ function addSignalBoy_CIRCULAR<Data = {}, TBase extends ClassType = ClassType>(B
 
 ```typescript
 
-// - Correct - //
-
-// Let's declare SignalBoy class using private untyped `_addSignalBoy(Object?: ClassType) => ClassType` as the basis.
-export class SignalBoy<Signals extends SignalsRecord = {}> extends _addSignalBoy() { } // See below in part 2.
-
-
-// - Mixin - //
+// - Mixin (private) - //
 
 // For local use only.
 // .. For clarity of usage and avoid problems with deepness, we don't use the <Data> here at all and return ClassType.
@@ -274,6 +268,9 @@ function _addSignalBoy(Base?: ClassType): ClassType {
 
     }
 }
+
+
+// - Mixin (public) - //
 
 /** Add DataBoy features to a base class.
  * - Provide BaseClass type specifically (2nd arg) or use AsMixin type helper.
@@ -336,6 +333,12 @@ myMix1.sendSignal("test", 1);
 myMix2.sendSignal("test", 2);
 myMix1.name = "test";
 myMix2.name; // string;
+
+```
+
+### Extra - uplifting the above MyMix to have generic parameters
+
+```typescript
 
 // To uplift MyMix to have generic parameters, just define class + interface, like done above.
 // .. Class extending ClassType.
