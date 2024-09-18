@@ -1,7 +1,7 @@
 
 ## WHAT
 
-`easy-mix` provides two simple JS functions (Mixins and MixinsWith) to handle mixins, and related TS tools supporting easy generic typing.
+`easy-mix` provides two simple JS functions (`Mixins` and `MixinsWith`) to handle mixins, and related TS tools.
 
 The npm package can be found with: [easy-mix](https://www.npmjs.com/package/easy-mix). Contribute in GitHub: [koodikulma-fi/easy-mix.git](https://github.com/koodikulma-fi/easy-mix.git)
 
@@ -9,9 +9,9 @@ The npm package can be found with: [easy-mix](https://www.npmjs.com/package/easy
 
 ## Mixins function
 
-- Helper to create a mixed class from a sequence of mixins in ascending order: [FirstMixin, SecondMixin, ...].
-- The typeguard evaluates each mixin up to 20 individually (by mixin form and implied requirements), the rest is not evaluated.
-- Note that in cases where mixins are dependent on each other and support type arguments, provide them for all in the chain.
+- Helper to create a mixed class from a sequence of mixins in ascending order: `[FirstMixin, SecondMixin, ...]`.
+- The typeguard evaluates up to mixins (by mixin form and implied requirements), the rest is not evaluated.
+- In cases where mixins are dependent on each other and support type arguments, provide them for all in the chain.
 
 ### Basic usage
 
@@ -102,10 +102,7 @@ class MyManualMix extends addMixin3<MyInfo>(addMixin2(addMixin1<MyInfo>(Object))
 
 // On the JS side, the feature is implemented like this.
 export function MixinsWith(...mixins) {
-    let Base = Object;
-    for (const mixin of mixins)
-        Base = mixin(Base);
-    return Base;
+    return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Object);
 }
 
 ```
@@ -212,9 +209,7 @@ class MyManualMix extends addMixin3<MyInfo>(addMixin2<MyInfo>(addMixin1(MyBase<M
 
 // On the JS side, the feature is implemented like this.
 export function MixinsWith(Base, ...mixins) {
-    for (const mixin of mixins)
-        Base = mixin(Base);
-    return Base;
+    return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Base);
 }
 
 ```

@@ -77,19 +77,13 @@
  * 
  * // On the JS side, the feature is implemented like this.
  * export function MixinsWith(...mixins) {
- *     let Base = Object;
- *     for (const mixin of mixins)
- *         Base = mixin(Base);
- *     return Base;
+ *     return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Object);
  * }
  * 
  * ```
  */
 export function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(...mixins: EvaluateMixinChain<Mixins>): MergeMixins<Mixins> {
-    let Base: ClassType = Object;
-    for (const mixin of mixins as Array<(Base: ClassType) => ClassType>)
-        Base = mixin(Base);
-    return Base as any;
+    return (mixins as Array<(Base: ClassType) => ClassType>).reduce((ExtBase, mixin) => mixin(ExtBase), Object) as MergeMixins<Mixins>;
 }
 
 /** Helper to create a mixed class with a base class and a sequence of mixins in ascending order: `[Base, FirstMixin, SecondMixin, ...]`.
@@ -169,17 +163,13 @@ export function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(...
  * 
  * // On the JS side, the feature is implemented like this.
  * export function MixinsWith(Base, ...mixins) {
- *     for (const mixin of mixins)
- *         Base = mixin(Base);
- *     return Base;
+ *     return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Base);
  * }
  * 
  * ```
  */
 export function MixinsWith<Base extends ClassType, Mixins extends Array<(Base: ClassType) => ClassType>>(Base: Base, ...mixins: EvaluateMixinChain<Mixins, Base>): MergeMixins<Mixins, Base, InstanceType<Base>> {
-    for (const mixin of mixins as Array<(Base: ClassType) => ClassType>)
-        Base = mixin(Base) as Base;
-    return Base as any;
+    return (mixins as Array<(Base: ClassType) => ClassType>).reduce((ExtBase, mixin) => mixin(ExtBase), Base) as MergeMixins<Mixins, Base, InstanceType<Base>>;
 }
 
 
