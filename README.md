@@ -1,543 +1,379 @@
 
-## TODO (docs):
-- Add tiny to docs:
-    * numberRange, buildRecordable
-- Add RefreshCycles and ContextCycles.
-- Add about the static methods in ContextAPI.
-- Maybe rename the repo to "refresh-cycle" .. ?  
-    - --> MAYBE RENAME .. To ... "data-mix" ..! .. we also provide mixin tools..
-- HEy.. WE 'D BASICALLY LIKE... SIGNALBOY..
-    * For example.... RefreshCycle wants to just have that.. It's confusing for it to have the more complex features... and awaitSync and such.
-    * So.. Add that, and remove the combos: SignalDataMan and SignalDataBoy. Can just do it through the mixin.
-
-
 ## WHAT
 
-`data-signals` is a light weight library containing a few simple but carefully designed JS/TS classes, mixins and tools for managing complex state and action flow in sync.
+`easy-mix` provides two simple JS functions (Mixins and MixinsWith) to handle mixins, and related TS tools supporting easy generic typing.
 
-The classes and methods are fully typed and commented. Accordingly the methods themselves can be used as documentation.
-
-The library runs on server and browser, and has no dependencies.
-
-The npm package can be found with: [data-signals](https://www.npmjs.com/package/data-signals). Contribute in GitHub: [koodikulma-fi/data-signals.git](https://github.com/koodikulma-fi/data-signals.git)
+The npm package can be found with: [easy-mix](https://www.npmjs.com/package/easy-mix). Contribute in GitHub: [koodikulma-fi/easy-mix.git](https://github.com/koodikulma-fi/easy-mix.git)
 
 ---
 
-## CONTENTS
+## Mixins function
 
-There are 3 kinds of tools available.
+- Helper to create a mixed class from a sequence of mixins in ascending order: [FirstMixin, SecondMixin, ...].
+- The typeguard evaluates each mixin up to 20 individually (by mixin form and implied requirements), the rest is not evaluated.
+- Note that in cases where mixins are dependent on each other and support type arguments, provide them for all in the chain.
 
-### 1. BASE CLASSES / MIXINS
-
-A couple of classes and mixins for signalling and data listening features.
-- `SignalMan` provides a service to attach listener callbacks to signals and then emit signals from the class - optionally supporting various data or sync related options.
-- `DataBoy` provides data listening services, but without actually having any data.
-- `DataMan` extends `DataBoy` to provide the actual data hosting and related methods.
-- `SignalDataBoy` extends both `SignalMan` and `DataBoy` (through mixins).
-- `SignalDataMan` extends both `SignalMan` and `DataMan` (through mixins).
-
-Note. The mixins simply allow to extend an existing class with the mixin features - the result is a new class.
-
-### 2. CONTEXT CLASSES
-
-Two classes specialized for complex data sharing situations, like those in modern web apps.
-- `Context` extends `SignalDataMan` with syncing related settings. 
-- `ContextAPI` extends `SignalDataBoy` and allows to listen to data and signals in named contexts.
-
-The `ContextAPI` can also affect syncing of `Context` refreshes in regards to the "delay" cycle.
-- For example, consider a state based rendering app, where you first set some data in context to trigger rendering ("pre-delay"), but want to send a signal only once the whole rendering is completed ("delay"). Eg. the signal is meant for a component that was not there before the state refresh.
-- To solve it, the rendering hosts can simply use a connected contextAPI and override its `awaitDelay` method to await until rendering completed, making the "delay" be triggered only once the last of them completed.
-
-### 3. STATIC LIBRARY METHODS
-
-A couple of data reusing concepts in the form of library methods.
-- Simple `areEqual(a, b, level?)` and `deepCopy(anything, level?)` methods with custom level of depth (-1).
-    * The methods support native JS Objects, Arrays, Maps, Sets and handling classes.
-- Data selector features:
-    * `createDataTrigger` triggers a callback when reference data is changed from previous time.
-    * `createDataMemo` recomputes / reuses data based on arguments: if changed, calls the producer callback.
-    * `createDataSource` is like createDataMemo but with an extraction process before the producer callback.
-    * `createCachedSource` is like createDataSource but creates a new data source for each cacheKey.
-
----
-
-## 1. BASE CLASSES / MIXINS
-
-### SignalMan
-
-- `SignalMan` provides signalling features, from simple instant void signals to complex synced awaiting getters.
+### Basic usage
 
 ```typescript
 
-// Prepare signal typing.
-type Signals = { doIt: (what: number) => void; whatIsLife: (whoAsks: string) => Promise<number>; };
+// Create mixins.
+const addMixin1 = <Info = {}>(Base: ClassType) => class Mixin1 extends Base { num: number = 5; testMe(testInfo: Info): void {} }
+const addMixin2 = (Base: ClassType) => class Mixin2 extends Base { name: string; }
+const addMixin3 = <Info = {}>(Base: ReturnType<typeof addMixin1<Info>>) => class Mixin3 extends Base { }
 
-// Create a SignalMan instance.
-const signalMan = new SignalMan<Signals>();
-
-// Listen to signals.
-signalMan.listenTo("doIt", (what) => { console.log(what); });
-signalMan.listenTo("whatIsLife", (whoAsks) => new Promise(res => res(whoAsks === "me" ? 0 : -1)));
-
-// Send a signal.
-signalMan.sendSignal("doIt", 5);
-
-// Send a more complex signal.
-const livesAre = await signalMan.sendSignalAs("await", "whatIsLife", "me"); // number[]
-const lifeIsAfterAll = await signalMan.sendSignalAs(["await", "first"], "whatIsLife", "me"); // number | undefined
-
-```
-
-### DataMan & DataBoy
-
-- `DataBoy` simply provides data listening basis without having any data. (It's useful eg. for `ContextAPI`s.)
-- `DataMan` completes the concept with the `data` member and related methods for setting and getting data.
-    * Note that when nested data is set (with setInData), all the parenting data dictionaries are shallow copied.
-
-```typescript
-
-// Create a DataMan instance.
-const initialData = { something: { deep: true }, simple: "yes" };
-const dataMan = new DataMan(initialData);
-
-// Get data.
-dataMan.getData(); // { something: { deep: true }, simple: "yes" }
-dataMan.getInData("something.deep"); // true
-
-// Listen to data.
-dataMan.listenToData("something.deep", "simple", (deep, simple) => { console.log(deep, simple); });
-dataMan.listenToData("something.deep", (deepOrFallback) => { }, [false]); // If "something.deep" would be undefined, use `false`.
-dataMan.listenToData({ "something.deep": 0 as const, "simple": false }, (values) => {
-    values["something.deep"]; // boolean | 0
-    values["simple"]; // string | boolean
-});
-
-// Trigger changes.
-// .. At DataMan level, the data is refreshed instantly and optional timeouts are resolved separately.
-// .. Note. The Contexts level has 0ms timeout by default and the refreshes are triggered all in sync.
-dataMan.setData({ simple: "no" });
-dataMan.setInData("something.deep", false); // Automatically shallow copies the parenting "something" and root data object.
-dataMan.refreshData("something.deep"); // Trigger a refresh manually.
-dataMan.refreshData(["something.deep", "simple"], 5); // Trigger a refresh after 5ms timeout.
-
-```
-
-### How to use mixins
-
-- Often you can just go and extend the class directly.
-- But in situations where you can't, mixins make life so much more convenient.
-
-```typescript
-
-// Let's define some custom class.
-class CustomBase {
-    something: string = "";
-    hasSomething(): boolean {
-        return !!this.something;
+// Create a mixed class.
+// .. Provide MyInfo systematically to all that use it. Otherwise you get `unknown` for the related type.
+type MyInfo = { something: boolean; };
+class MyMix extends Mixins(addMixin1<MyInfo>, addMixin2, addMixin3<MyInfo>) {
+    test() {
+        this.testMe({ something: true }); // Requires `MyInfo`.
+        this.name = "Mixy"; // Requires `string`.
+        this.num; // number;
     }
 }
 
-// Let's mix in typed SignalMan features.
-type MySignals = { doSomething: (...things: number[]) => void; };
-class CustomSignalMix extends (SignalManMixin as ClassMixer<SignalManType<MySignals>>)(CustomBase) { }
-// class CustomSignalMix extends SignalManMixin(CustomBase) { } // Without typing.
-
-// Create like any class.
-const cMix = new CustomSignalMix();
-
-// Use.
-cMix.something = "yes";
-cMix.hasSomething(); // true
-cMix.listenTo("doSomething", (...things) => { });
-
-```
-- You can also use constructor arguments.
-- If the mixin uses args, it uses the first arg(s) and pass the rest further as `(...passArgs)`.
-
-```typescript
-
-// Let's define a custom class with constructor args.
-class CustomBase {
-    someMember: boolean;
-    constructor(someMember: boolean) {
-        this.someMember = someMember;
-    }
-}
-
-// Let's mix in typed DataMan features.
-interface MyData { something: { deep: boolean; }; simple: string; }
-class CustomDataMix extends (DataManMixin as ClassMixer<DataManType<MyData>>)(CustomBase) {
-
-    // Optional constructor. If you need a constructor, it could look like this.
-    constructor(data: MyData, someMember: boolean) {
-        super(data, someMember);
-    }
-
-}
-
-// Create like any class.
-const cMix = new CustomDataMix({ something: { deep: true }, simple: "" }, false);
-
-// Use.
-cMix.listenToData("something.deep", "simple", (deep, simple) => { });
-
-
-```
-- And you can of course mix many mixins, one after the other.
-
-```typescript
-
-// Mix DataMan and SignalMan upon CustomBase.
-class MyMultiMix extends DataManMixin(SignalManMixin(CustomBase)) {}
-
-// The same thing as above happens to be also available as a mixin already.
-class MyMultiMix extends SignalDataManMixin(CustomBase) {}
-
-// Note that you can do the same typing tricks as above using the ClassMixer type.
-// .. Note also that you can use ClassMixer for your own custom mixins - see the source code.
+// Test failure.
+// .. addMixin3 is red-underlined (not assignable to `never`) as it requires addMixin1.
+class MyFail extends Mixins(addMixin3) { }
 
 ```
 
----
-
-## 2. CONTEXT CLASSES
-
-### Context
-
-- `Context` extends `SignalDataMan` and provides synced data refreshes and signalling.
-- The data refreshes are triggered simultaneously after a common timeout (vs. separately at DataMan level), and default to 0ms timeout.
-- The signalling part is synced to the refresh cycle using "pre-delay" and "delay" options.
-    * The "pre-delay" is tied to context's refresh cycle set by the `{ refreshTimeout: number | null; }` setting.
-    * The "delay" happens after all the connected `ContextAPI`s have resolved their `awaitDelay` promise.
-    * Note that "pre-delay" signals are called right before data listeners, while "delay" always after them.
+### Passing generic parameters
 
 ```typescript
 
-// Prepare initial data and settings.
-const initialData = { something: { deep: true }, simple: "yes" };
-const settings: { refreshTimeout?: number | null; } = {}; // Defaults to 0ms, null means synchronous, undefined uses default.
+// You might want to pass the Info arg further to a mixed base, but TS won't allow it. 
+// .. In the lines below, <Info> is red-underlined, as base class expressions cannot ref. class type params.
+class MyClass_Wish<Info extends Record<string, any> = {}> extends Mixins(addMixin1<Info>) { }
+class MyClass_Wish_Manual<Info extends Record<string, any> = {}> extends addMixin1<Info>(Object) { }
 
-// Extra typing - just to showcase Context<Data, Signals>.
-type Data = typeof initialData;
-type Signals = { doIt: (what: number) => void; whatIsLife: (whoAsks: string) => Promise<number>; };
-
-// Create a context.
-const myContext = new Context<Data, Signals>(initialData, settings);
-
-// Get data.
-myContext.getData(); // { something: { deep: true }, simple: "yes" }
-myContext.getInData("something.deep"); // true
-
-// Listen to data and signals.
-myContext.listenToData("something.deep", "simple", (deep, simple) => { console.log(deep, simple); });
-myContext.listenToData("something.deep", (deepOrFallback) => { }, [ "someFallback" ]); // Custom fallback if data is undefined.
-myContext.listenTo("doIt", (what) => { console.log(what); });
-myContext.listenTo("whatIsLife", (whoAsks) => new Promise(res => res(whoAsks === "me" ? 0 : -1)));
-
-// Trigger changes.
-// .. At Contexts level data refreshing uses 0ms timeout by default, and refreshes are always triggered all in sync.
-myContext.setData({ simple: "no" });
-myContext.setInData("something.deep", false);
-myContext.refreshData("something.deep"); // Trigger a refresh manually.
-myContext.refreshData(["something.deep", "simple"], 5); // Add keys and force the next cycle to be triggered after 5ms timeout.
-myContext.refreshData(true, null); // Just refresh everything, and do it now (with `null` as the timeout).
-
-// Send a signal.
-myContext.sendSignal("doIt", 5);
-
-// Send a more complex signal.
-const livesAre = await myContext.sendSignalAs("await", "whatIsLife", "me"); // number[]
-const lifeIsAfterAll = await myContext.sendSignalAs(["delay", "await", "first"], "whatIsLife", "me"); // number | undefined
+// So instead do to this.
+// 1. Create a class extending addMixin using `as ClassType` to loosen the base class type.
+// .. Remarkably, _after_ setting up the interface below, we do have access to the base class even inside the extending class.
 //
-// <-- Using "pre-delay" ties to context's refresh cycle, while "delay" ties to once all related contextAPIs have refreshed.
+class MyClass<Info extends Record<string, any> = {}> extends (Mixins(addMixin1) as ClassType) {
+    myMethod(key: keyof Info & string): number { return this.num; } // `num` is a recognized class member.
+}
+// 2. Create a matching interface extending what we actually want to extend.
+// .. Another remarkable thing is that there's no need to actually retype the class in the interface.
+//
+interface MyClass<Info extends Record<string, any> = {}> extends InstanceType<MergeMixins<[typeof addMixin1<Info>]>> { }
+// .. The line below would work equally well for a single mixin case like this.
+// interface MyClass<Info extends Record<string, any> = {}> extends InstanceType<ReturnType<typeof addMixin1<Info>>> { }
+
+// Test the result, and prove the claim in step 2.
+const myClass = new MyClass<MyInfo>();
+myClass.testMe({ something: false }); // Requires `MyInfo`.
+const value = myClass.myMethod("something"); // Requires `keyof MyInfo & string`. Returns `number`.
+myClass.num === value; // The type is `boolean`, and outcome `true` on JS side.
 
 ```
 
-### ContextAPI
-
-- `ContextAPI` provides communication with multiple _named_ `Context`s.
-- When a ContextAPI is hooked up to a context, it can use its data and signalling services.
-    * In this sense, ContextAPI provides a stable reference to potentially changing set of contexts.
-- The ContextAPI's optional `awaitDelay` method affects the "delay" refresh cycle of Contexts (by the returned promise).
-    * The default implementation resolves the promise instantly, but can be overridden (for external syncing).
-    * The Context's "delay" cycle is resolved once all the connected ContextAPIs have been awaited.
-    * I's totally fine to override the method externally: `myContextAPI.awaitDelay = async () => await someProcess()`.
+### About mixing manually
 
 ```typescript
 
-// Typing for multiple contexts.
-type CtxSettingsData = { something: { deep: boolean; }; simple: string; };
-type CtxUserData = { info: { name: string; avatar: string; } | null; };
-type CtxUserSignals = {
-    loggedIn: (userInfo: { name: string; avatar: string; }) => void;
-    whatIsLife: (whoAsks: string) => Promise<number>;
-};
-type AllContexts = {
-    settings: Context<CtxSettingsData>;
-    user: Context<CtxUserData, CtxUserSignals>;
-};
-
-// Or, say we have created them.
-const allContexts: AllContexts = {
-    settings: new Context<CtxSettingsData>({ something: { deep: true }, simple: "yes" }),
-    user: new Context<CtxUserData, CtxUserSignals>({ info: null })
-};
-
-// Create a stand alone contextAPI instance.
-const cApi = new ContextAPI(allContexts);
-// const cApi = new ContextAPI<AllContexts>(); // Without initial contexts, but typing yes.
-
-// Set and get contexts later on.
-cApi.setContexts(allContexts);
-cApi.setContext("settings", allContexts.settings);
-cApi.getContexts(); // AllContexts
-cApi.getContext("user"); // Context<CtxUserData, CtxUserSignals> | undefined
-
-// Get data.
-cApi.getInData("settings"); // CtxSettingsData | undefined
-cApi.getInData("settings.something.deep"); // boolean | undefined
-cApi.getInData("settings.something.deep", false); // boolean
-
-// Listen to signals.
-cApi.listenTo("user.loggedIn", (userInfo) => { console.log(userInfo); }); // logs: { name, avatar }
-cApi.listenTo("user.whatIsLife", (whoAsks) => new Promise(res => res(whoAsks === "me" ? 0 : -1)));
-
-// Listen to data.
-// .. As contexts might come and go, the type has `| undefined` fallback.
-cApi.listenToData("settings.something.deep", "settings.simple", (deep, simple) => { console.log(deep, simple); });
-// .. To use custom, provide custom fallback.
-cApi.listenToData("settings.something.deep", (deep) => { }, [false]); // boolean
-cApi.listenToData("settings.something.deep", (deep) => { }, ["someFallback" as const]); // boolean | "someFallback"
-cApi.listenToData("settings.something", "settings.simple", (something, simple) => { }, [{ deep: 1 }, ""] as const);
-cApi.listenToData({ "settings.something.deep": 0 as const, "settings.simple": "" }, (values) => {
-    values["settings.something.deep"]; // boolean | 0
-    values["settings.simple"]; // string
-});
-
-// Trigger changes.
-// .. At Contexts level data refreshing uses 0ms timeout by default, and refreshes are always triggered all in sync.
-cApi.setInData("settings", { simple: "no" }); // Extends already by default, so "something" won't disappear.
-cApi.setInData("settings", { simple: "no" }, false); // This would make "something" disappear, but typing prevents it.
-cApi.setInData("settings.something.deep", false);  // Even if "something" was lost, this would re-create the path to "something.deep".
-cApi.refreshData("settings.something.deep"); // Trigger a refresh manually.
-cApi.refreshData(["settings.something.deep", "user.info"], 5); // Add keys and force the next cycle to be triggered after 5ms timeout.
-cApi.refreshData(["settings", "user"], null); // Just refresh both contexts fully, and do it instantly (with `null` as the timeout).
-
-// Override the awaitDelay timer - it will affect when "delay" signals are resolved for all connected contexts.
-cApi.awaitDelay = () => new Promise((resolve, reject) => { window.setTimeout(resolve, 500); }); // Just to showcase.
-cApi.awaitDelay = async () => await someExternalProcess();
-
-// Send a signal.
-cApi.sendSignal("user.loggedIn", { name: "Guest", avatar: "" });
-
-// Send a more complex signal.
-const livesAre = await cApi.sendSignalAs("await", "user.whatIsLife", "me"); // number[]
-const lifeIsAfterAll = await cApi.sendSignalAs(["delay", "await", "first"], "user.whatIsLife", "me"); // number | undefined
+// If you use the above mixins manually, you get two problems (that's why `Mixins` function exists).
+// 1. The result won't give you the combined type. Though you could use MergeMixins or ReClassify type to re-type it.
+// 2. You get problems with intermediate steps in the chain.
+// +  The core reason for these problems is that each pair is evaluated separately, not as a continuum.
 //
-// <-- Using "pre-delay" is synced to context's refresh cycle, while "delay" to once all related contextAPIs have refreshed.
+class MyManualMix extends addMixin3<MyInfo>(addMixin2(addMixin1<MyInfo>(Object))) {
+    // In the above line `addMixin2(...)` is red-underlined, because it doesn't fit `addMixin3`'s argument about requiring `addMixin1`.
+    test() {
+        this.testInfo({ something: false }); // testInfo red-underlined because not existing.
+        this.someMember = 8; // someMember is red-underlined because because not existing.
+        this.enabled; // enabled is red-underlined because because not existing.
+    }
+}
+
+
+```
+
+### Actual JS implementation
+
+```typescript
+
+// On the JS side, the feature is implemented like this.
+export function MixinsWith(...mixins) {
+    let Base = Object;
+    for (const mixin of mixins)
+        Base = mixin(Base);
+    return Base;
+}
 
 ```
 
 ---
 
-## 3. STATIC LIBRARY METHODS
+## MixinsWith function
 
-- The `areEqual(a, b, depth?)` and `deepCopy(anything, depth?)` are fairly self explanatory: they compare or copy data with custom level of depth.
-- Memos, triggers and data sources are especially useful in state based refreshing systems that compare previous and next state to determine refreshing needs. The basic concept is to feed argument(s) to a function, who performs a comparison on them to determine whether to trigger change (= a custom callback).
+- Helper to create a mixed class with a base class and a sequence of mixins in ascending order: [Base, FirstMixin, SecondMixin, ...].
+- The typeguard evaluates each mixin up to 20 individually (by mixin form and implied requirements), the rest is not evaluated.
+- Note that in cases where mixins are dependent on each other and support type arguments, provide them for all in the chain, including the base class.
 
-### library: areEqual
-
-- The `areEqual(a, b, depth?)` compares data with custom level of depth.
-- If depth is under 0, checks deeply. Defaults to -1.
+### Basic usage
 
 ```typescript
 
-// Basic usage.
-const test = { test: true };
-areEqual(true, test); // false, clearly not equal.
-areEqual(test, { test: true }); // true, contents are equal when deeply check.
-areEqual(test, { test: true }, 1); // true, contents are equal when shallow checked.
-areEqual(test, { test: true }, 0); // false, not identical objects.
-areEqual(test, test, 0); // true, identical objects.
+// Create a base class and some mixins.
+class MyBase<Info = {}> { testInfo(info: Info): void {} static STATIC_ONE = 1; }
+const addMixin1 = (Base: ClassType) => class Mixin1 extends Base { someMember: number = 5; }
+const addMixin2 = <Info = {}>(Base: typeof MyBase<Info>) => class Mixin2 extends Base { enabled: boolean = false; }
+const addMixin3 = <Info = {}>(Base: ReturnType<typeof addMixin2<Info>>) => class Mixin3 extends Base { }
+
+// Create a mixed class.
+// .. Provide MyInfo systematically to all that use it. Otherwise you get `unknown` for the related type.
+type MyInfo = { something: boolean; };
+class MyMix extends MixinsWith(MyBase<MyInfo>, addMixin1, addMixin2<MyInfo>, addMixin3<MyInfo>) {
+    test() {
+        this.testInfo({ something: false }); // Requires `MyInfo`.
+        this.someMember = 8; // Requires `number`.
+        this.enabled; // boolean;
+    }
+}
+
+// Test failure.
+// .. addMixin2 is red-underlined as it requires MyBase, Object is not enough.
+class MyFail extends MixinsWith(Object, addMixin2) { }
 
 ```
 
-### library: deepCopy
-
-- The `deepCopy(anything, depth?)` copies the data with custom level of depth.
-- If depth is under 0, copies deeply. Defaults to -1.
+### Passing generic parameters
 
 ```typescript
 
-// Prepare.
-const original = { something: { deep: true }, simple: "yes" };
-let copy: typeof original;
-// Basic usage.
-copy = deepCopy(original); // Copied deeply.
-copy = deepCopy(original, 1); // Copied one level, so original.something === copy.something.
-copy = deepCopy(original, 0); // Did not copy, so original === copy.
+// You might want to pass the Info arg further to a mixed base, but TS won't allow it. 
+// .. In the lines below, both <Info> are red-underlined, as base class expressions cannot ref. class type params.
+class MyClass_Wish<Info extends Record<string, any> = {}> extends MixinsWith(MyBase<Info>, addMixin1) { }
+class MyClass_Wish_Manual<Info extends Record<string, any> = {}> extends addMixin1(MyBase<Info>) { }
+
+// So instead do to this.
+// 1. Create a class extending addMixin using `as ClassType` to loosen the base class type.
+// .. Remarkably, _after_ setting up the interface below, we do have access to the base class even inside the extending class.
+//
+class MyClass<Info extends Record<string, any> = {}> extends (MixinsWith(MyBase, addMixin1) as ClassType) {
+    myMethod(key: keyof Info & string): number { return this.someMember; } // `someMember` is a recognized class member.
+}
+
+// 2. Create a matching interface extending what we actually want to extend.
+// .. Another remarkable thing is that there's no need to actually retype the class in the interface. Just declare it.
+//
+interface MyClass<Info extends Record<string, any> = {}> extends InstanceType<MergeMixinsWith<typeof MyBase<Info>, [typeof addMixin1]>> { }
+
+// Test the result, and prove the claim in step 2.
+const myClass = new MyClass<MyInfo>();
+const value = myClass.myMethod("something"); // Requires `keyof MyInfo & string`. Returns `number`.
+myClass.testInfo({ something: true });// Requires `MyInfo`.
+myClass.someMember = 3; // Requires `number`.
+myClass.constructor.STATIC_ONE; // number
+
 
 ```
 
-### library: createDataMemo
-
-- `createDataMemo` helps to reuse data in simple local usages. By default, it only computes the data if any of the arguments have changed.
+### About mixing manually
 
 ```typescript
 
-// Create a function that can be called to return updated data if arguments changed.
-const myMemo = createDataMemo(
-    // 1st arg is the producer callback that should return the desired data.
-    // .. It's only triggered when either (a, b) is changed from last time.
-    (a, b) => {
-        // Do something with the args.
-        return a.score > b.score ? { winner: a.name, loser: b.name } :
-            a.score < b.score ? { winner: b.name, loser: a.name } : 
-            { winner: null, loser: null };
-    },
-    // 2nd arg is optional and defines the _level of comparison_ referring to each argument.
-    // .. For DataMemo it defaults to 0, meaning identity comparison on each argument: oldArg[i] !== newArg[i].
-    // .. To do a deep comparison set to -1. Setting of 1 means shallow comparison (on each arg), and from there up.
-    0,
-);
-
-// Use the memo.
-const { winner, loser } = myMemo({ score: 3, name: "alpha"}, { score: 5, name: "beta" }); // { winner: "beta", loser: "alpha" }
+// If you use the above mixins and base class manually, you get two problems (that's why `MixinsWith` function exists).
+// 1. The result won't give you the combined type. Though you could use MergeMixins or ReClassify type to re-type it.
+// 2. You get problems with intermediate steps in the chain.
+// +  The core reason for these problems is that each pair is evaluated separately, not as a continuum.
+//
+class MyManualMix extends addMixin3<MyInfo>(addMixin2<MyInfo>(addMixin1(MyBase<MyInfo>))) {
+    // In the above line `addMixin1(...)` is red-underlined, because it doesn't fit `addMixin2`'s argument about requiring `Base`.
+    test() {
+        this.testInfo({ something: false }); // Requires `MyInfo`. // It's correct.
+        this.someMember = 8; // someMember is red-underlined because because not existing.
+        this.enabled; // boolean; // It's correct.
+    }
+}
 
 ```
 
-### library: createDataTrigger
-
-- `createDataTrigger` is similar to DataMemo, but its purpose is to trigger a callback on mount.
-- In addition, the mount callback can return another callback for unmounting, which is called if the mount callback gets overridden upon usage (= when memory changed and a new callback was provided).
+### Actual JS implementation
 
 ```typescript
 
-// Create a function that can be called to trigger a callback when the reference data is changed from the last time
-type Memory = { id: number; text: string; };
-const myTrigger = createDataTrigger<Memory>(
-    // 1st arg is an optional (but often used) _mount_ callback.
-    (newMem, oldMem) => {
-        // Run upon change.
-        if (newMem.id !== oldMem.id)
-            console.log("Id changed!");
-        // Optionally return a callback to do _unmounting_.
-        return (currentMem, nextMem) => { console.log("Unmounted!"); }
-    },
-    // 2nd arg is optional initial memory.
-    // .. Use it to delay the first triggering of the mount callback (in case the same on first usages).
-    { id: 1, text: "init" },
-    // 3rd arg is optional depth, defaults to 1, meaning performs shallow comparison on the memory.
-    1
-);
-
-// Use the trigger.
-let didChange = myTrigger({ id: 1, text: "init" }); // false, new memory and init memory have equal contents.
-didChange = myTrigger({ id: 1, text: "thing" }); // true
-didChange = myTrigger({ id: 2, text: "thing" }); // true, logs: "Id changed!"
-didChange = myTrigger({ id: 2, text: "thing" }, true); // true
-
-// Change callback.
-const newCallback = () => { console.log("Changes!"); };
-didChange = myTrigger({ id: 2, text: "thing" }, false, newCallback); // false
-didChange = myTrigger({ id: 3, text: "thing" }, false, newCallback); // true, logs: "Unmounted!" and then "Changes!".
-didChange = myTrigger({ id: 3, text: "now?" }); // true, logs: "Changes!"
+// On the JS side, the feature is implemented like this.
+export function MixinsWith(Base, ...mixins) {
+    for (const mixin of mixins)
+        Base = mixin(Base);
+    return Base;
+}
 
 ```
 
-### library: createDataSource
+---
 
-- `createDataSource` returns a function for reusing/recomputing data.
-- The function receives custom arguments and uses an extractor to produce final arguments for the producer.
-- The producer is triggered if the args count or any arg has changed: `newArgs.some((v, i) !== oldArgs[i])`.
-- The level of comparison can be customized by the optional 3rd argument. Defaults to 0: if any arg not identical.
+## TypeScript tools
+
+- As is obvious from the implementations, the JS side of things is trivial.
+- The magic happens on the TS side, and sometimes you might need to use the TS tools specifically.
+
+### Simple TS helpers
 
 ```typescript
 
-// Prepare.
-type MyParams = [ colorTheme: { mode?: "light" | "dark" }, specialMode?: boolean];
-type MyData = { theme: "dark" | "light"; special: boolean; }
+// Array tools.
+/** Check if a tuple contains the given value type. */
+export type IncludesValue<Arr extends any[], Val extends any> = { [Key in keyof Arr]: Arr[Key] extends Val ? true : false }[number] extends false ? false : true;
 
-// With pre-typing.
-const mySource = (createDataSource as CreateDataSource<MyParams, MyData>)(
-    // Extractor - showcases the usage for contexts.
-    // .. For example, if has many usages with similar context data needs.
-    (colorTheme, specialMode) => [
-        colorTheme?.mode || "dark",
-        specialMode || false,
-    ],
-    // Producer - it's only called if the extracted data items were changed from last time.
-    (theme, special) => ({ theme, special }),
-    // Optional depth of comparing each argument.
-    // .. Defaults to 0: if any arg (or arg count) is changed, triggers the producer.
-    0
-);
+// Iterators.
+/** Iterate down from 20 to 0. If iterates at 0 returns never. If higher than 20, returns 0. (With negative or other invalid returns all numeric options type.)
+ * - When used, should not input negative, but go down from, say, `Arr["length"]`, and stop after 0.
+ */
+export type IterateBackwards = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...0[]];
+/** Iterate up from 0 to 20. If iterates at 20 or higher returns never. (With negative or other invalid returns all numeric options type.)
+ * - When used, should not input negative, but go up from 0 until `Arr["length"]`.
+ */
+export type IterateForwards = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...never[]];
 
-// With manual typing.
-const mySource_MANUAL = createDataSource(
-    // Extractor.
-    (...[colorTheme, specialMode]: MyParams) => [
-        colorTheme?.mode || "dark",
-        specialMode || false,
-    ],
-    // Producer.
-    (theme, special): MyData => ({ theme, special }),
-    // Optional depth of comparing each argument.
-    0
-);
-
-// Test.
-const val = mySource({ mode: "dark" }, true);
-const val_FAIL = mySource({ mode: "FAIL" }, true); // The "FAIL" is red-underlined.
-const val_MANUAL = mySource_MANUAL({ mode: "dark" }, true);
-const val_MANUAL_FAIL = mySource_MANUAL({ mode: "FAIL" }, true); // The "FAIL" is red-underlined.
+// Class tools.
+/** Get the type for class constructor arguments. */
+export type GetConstructorArgs<T> = T extends new (...args: infer U) => any ? U : never;
+/** Get the type for class constructor return. */
+export type GetConstructorReturn<T> = T extends new (...args: any[]) => infer U ? U : never;
+/** Get the type for class from class instance - the opposite of `InstanceType`. Optionally define constructor args. */
+export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
 
 ```
 
-### library: createCachedSource
+### Mixin TS helpers: ReClassify
 
-- `createCachedSource` is like multiple `createDataSource`s together separated by the unique cache key.
-- The key key for caching is derived from an extra "cacher" function dedicated to this purpose - it should return the cache key (string).
-- The cacher receives the same arguments as the extractor, but also the cached dictionary as an extra argument `(...args, cached) => string`.
+```typescript
+ 
+// - Arguments - //
+
+export type ReClassify<
+    Class, // Should refer to the type of the merged class type. For fluency type is any.
+    Instance, // Should refer to the type of the merged class instance.
+    // Optional. Can be used to define type constructor arguments for the resulting class.
+    ConstructorArgs extends any[] = any[]
+> = SomeComplexProcess;
+
+
+// - Example - //
+
+// Declare type.
+type MyClassType = ReClassify<{ SOMETHING_STATIC: number; }, { instanced: boolean; }, [one: number, two?: boolean]>;
+
+// Fake a class and instance on JS side.
+const MyClass = class MyClass { } as unknown as MyClassType;
+const myClass = new MyClass(5); // Constructor requires: [one: number, two?: boolean]
+
+// Do some funky tests.
+MyClass.SOMETHING_STATIC; // number
+myClass.instanced; // boolean
+myClass.constructor.SOMETHING_STATIC; // number
+const mySubClass = new myClass.constructor(0, true);
+mySubClass.instanced // boolean;
+mySubClass.constructor.SOMETHING_STATIC; // number;
+
+```
+
+### Mixin TS helpers: EvaluateMixinChain
 
 ```typescript
 
-// Let' use the same MyData as above, but add cacheKey to args.
-type MyCachedParams = [
-    colorTheme: { mode?: "light" | "dark" },
-    specialMode: boolean | undefined,
-    cacheKey: string
-];
+// - Arguments - //
 
-// With pre-typing.
-const mySource = (createDataSource as CreateCachedSource<MyCachedParams, MyData>)(
-    // Extractor.
-    (colorTheme, specialMode) => [colorTheme?.mode || "dark", specialMode || false],
-    // Producer.
-    (theme, special) => ({ theme, special }),
-    // Cache key generator.
-    (_theme, _special, cacheKey) => cacheKey,
-    // Optional depth.
-    0
-);
+export type EvaluateMixinChain<
+    Mixins extends Array<any>,
+    // Optional. Can be used to define type of the base class.
+    BaseClass extends ClassType = ClassType
+> = SomeComplexProcess;
 
-// With manual typing.
-const mySource_MANUAL = createCachedDataSource(
-    // Extractor.
-    (...[colorTheme, specialMode]: MyCachedParams) => [colorTheme?.mode || "dark", specialMode || false],
-    // Producer.
-    (theme, special): MyData => ({ theme, special }),
-    // Cache key generator.
-    (_theme, _special, cacheKey) => cacheKey,
-    // Optional depth.
-    0
-);
 
-// Test. Let's say state1 and state2 variants come from somewhere.
-let val1 = mySource(state1a, state1b, "someKey"); // In one place.
-let val2 = mySource(state2a, state2b, "anotherKey"); // In another place with similar data.
-// We can do it again, and the producers won't be retriggered (unlike without caching).
-val1 = mySource(state1a, state1b, "someKey");
-val2 = mySource(state2a, state2b, "anotherKey");
+// - Example - //
+
+// Create mixins.
+const addMixin1 = <Info extends any = {}>(Base: ClassType) => class Mixin1 extends Base { testMe(testInfo: Info): void {} }
+const addMixin2 = <Info extends any = {}>(Base: ReturnType<typeof addMixin1<Info>>) => class Mixin2 extends Base { }
+
+// Create shortcuts for our tests below.
+type MyInfo = { test: boolean; };
+type Mixin1 = typeof addMixin1<MyInfo>;
+type Mixin2 = typeof addMixin2<MyInfo>;
+
+// Do some tests.
+type EvalMixins1 = EvaluateMixinChain<[Mixin1]>; // [typeof addMixin1<MyInfo>]
+type EvalMixins2 = EvaluateMixinChain<[Mixin2]>; // [never]
+type EvalMixins3 = EvaluateMixinChain<[Mixin1, Mixin2]>; // [typeof addMixin1<MyInfo>, typeof addMixin2<MyInfo>]
+type EvalMixins4 = EvaluateMixinChain<[Mixin2, Mixin1]>; // [never, typeof addMixin1<MyInfo>]
+type IsChain3Invalid = IncludesValue<EvalMixins3, never>; // false
+type IsChain4Invalid = IncludesValue<EvalMixins4, never>; // true
+
+// Funkier tests.
+type EvalMixins5 = EvaluateMixinChain<[Mixin1, Mixin2, "string"]>; // [..., never]
+type EvalMixins6 = EvaluateMixinChain<[Mixin1, Mixin2, () => {}]>; // [..., never]
+type EvalMixins7 = EvaluateMixinChain<[Mixin1, Mixin2, (Base: ClassType) => ClassType ]>; // All ok.
+
+
+```
+
+### Mixin TS helpers: `MergeMixins<Mixins, Class?, Instance?>`
+- Intersect mixins to a new clean class.
+- Note that if the mixins contain dependencies of other mixins, should type the dependencies fully to avoid unknown. See below.
+
+```typescript
+
+// - Arguments - //
+
+type MergeMixins<
+    Mixins extends Array<(Base: ClassType) => ClassType>,
+    // Optional. Can be used to define the type of the Base class.
+    Class extends Object = {},
+    Instance extends Object = {},
+> = SomeComplexProcess;
+
+
+// - Example - //
+
+// Create mixins.
+const addMixin1 = <Info extends any = {}>(Base: ClassType) => class Mixin1 extends Base { testMe(testInfo: Info): void {} }
+const addMixin2 = <Info extends any = {}>(Base: ReturnType<typeof addMixin1<Info>>) => class Mixin2 extends Base { static STATIC_ONE = 1; }
+const addMixin3 = (Base: ClassType) => class Mixin3 extends Base { name: string = ""; }
+
+// Merge the types manually.
+type MyInfo = { test: boolean; };
+type Mixins = [typeof addMixin1<MyInfo>, typeof addMixin2<MyInfo>, typeof addMixin3]; // Pass the MyInfo to all that need it.
+type MergedClassType = MergeMixins<Mixins>;
+
+// Extra. MergeMixins does not evaluate the chain. Do it with EvaluateMixinChain.
+type IsChainInvalid = IncludesValue<EvaluateMixinChain<Mixins>, never>; // false
+type IsChainInvalidNow = IncludesValue<EvaluateMixinChain<[Mixins[1], Mixins[0], Mixins[2]]>, never>; // true
+
+// Fake a class.
+const MergedClass = class MergedClass { } as unknown as MergedClassType;
+const mergedClass = new MergedClass();
+
+// Do funky tests.
+mergedClass.testMe({ test: false });
+mergedClass.testMe({ test: 5 }); // Fails - "test" is red-underlined. It's `unknown` if MyInfo only passed to addMixin1 or addMixin2, not both.
+mergedClass.constructor.STATIC_ONE; // number
+mergedClass.name = "Mergy";
+
+
+```
+
+### Mixin TS helpers: `MergeMixinsWith<BaseClass, Mixins>`
+- Exactly like MergeMixins (see its notes) but allows to input the class type of the base class for the mixin chain.
+
+```typescript
+
+// - Arguments - //
+
+export type MergeMixinsWith<
+    BaseClass extends ClassType,
+    Mixins extends Array<(Base: ClassType) => ClassType>
+> = MergeMixins<Mixins, BaseClass, InstanceType<BaseClass>>;
+
+
+// - Example - //
+
+class MyBaseClass { }
+type MyBaseMix = MergeMixinsWith<typeof MyBaseClass, MyMixinsArray>;
 
 ```
