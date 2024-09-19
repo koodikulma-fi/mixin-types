@@ -355,6 +355,10 @@ class MyMix<AddSignals extends SignalsRecord = {}> extends (addSignalBoy(MyBase)
     constructor() {
         super();
     }
+    test() {
+        // Use `(this as MyMix<MySignals>)` to get a stable base for Signals used.
+        (this as MyMix<MySignals>).sendSignal("test", 1);
+    }
 }
 // .. Interface explicitly typed.
 interface MyMix<AddSignals extends SignalsRecord = {}> extends SignalBoy<MySignals & AddSignals>, MyBase { }
