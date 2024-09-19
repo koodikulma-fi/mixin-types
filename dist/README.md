@@ -411,7 +411,7 @@ myMix.constructor.DEFAULT_TIMEOUT; // number | null
 // DataMan.
 // .. Let's define interfaces for DataMan with two constructor args (data: Data, settings: Settings).
 interface DataManType<Data = {}, Settings = {}> extends
-    // .. Could even do this: `{} extends Data ? [Data?, Settings?, ...any[]] : [Data, Settings?, ...any[]]`
+    // Alt. args: `{} extends Data ? [Data?, Settings?, ...any[]] : [Data, Settings?, ...any[]]`
     ClassType<DataMan<Data, Settings>, [data: Data, settings: Settings, ...args: any[]]> {}
 interface DataMan<Data = {}, Settings = {}> {
     ["constructor"]: DataManType<Data, Settings>; // Link to the static side.
