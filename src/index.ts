@@ -310,10 +310,10 @@ export type GetConstructorReturn<T> = T extends new (...args: any[]) => infer U 
  * Parameters and return:
  * @param Class Should refer to the type of the merged class type. For fluency it's not required that it's a ClassType (the "new" part will be omitted anyhow).
  * @param Instance Should refer to the type of the merged class instance.
- * @param ConstructorArgs Should refer to the constructor arguments of the new class (= the last mixin in the chain). Defaults to [].
+ * @param ConstructorArgs Should refer to the constructor arguments of the new class (= the last mixin in the chain). Defaults to any[].
  * @returns The returned type is a new class type, with recursive class <-> instance support.
  */
-export type AsClass<Class, Instance, ConstructorArgs extends any[] = []> = Omit<Class, "new"> & {
+export type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Class, "new"> & {
     // Note. We can't use Omit<Instance, "constructor"> below as it would turn class methods to property functions.
     // .. However, the same thing does not seem to bother TypeScript on the static side, so we _can_ use Omit<class, "new"> above.
     new (...args: ConstructorArgs): Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; };

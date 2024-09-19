@@ -222,11 +222,13 @@ declare function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(..
  * }
  *
  * // 2. Secondly, define the BaseBoy interface (needed above) explicitly, while the optional class loosely.
- * // .. Since we chose to use "single mixin + retyping", let's retype now to avoid circularity: `as any as typeof MyBase`.
- * export class BaseBoy<BaseNames extends string = string> extends (addBaseBoy(MyBase) as any as typeof MyBase) { }
+ * // .. Since we chose to use "single mixin + retyping", let's retype now to avoid circularity: `as any as ClassType`.
+ * // .. Note that we don't need to use `as any as typeof MyBase` since the interface already extends MyBase.
+ * export class BaseBoy<BaseNames extends string = string> extends (addBaseBoy(MyBase) as any as ClassType) { }
  * // .. The interface must match the class (in name and type args), and holds the explicit typing.
+ * // .. Note that if BaseBoy would also require a mixin would write: `extends MyBase, MyOtherMixin {`
  * export interface BaseBoy<BaseNames extends string = string> extends MyBase {
- *    testBase(baseName: BaseNames): boolean;
+ *   testBase(baseName: BaseNames): boolean;
  * }
  *
  * // Test.
@@ -291,10 +293,10 @@ type GetConstructorReturn<T> = T extends new (...args: any[]) => infer U ? U : n
  * Parameters and return:
  * @param Class Should refer to the type of the merged class type. For fluency it's not required that it's a ClassType (the "new" part will be omitted anyhow).
  * @param Instance Should refer to the type of the merged class instance.
- * @param ConstructorArgs Should refer to the constructor arguments of the new class (= the last mixin in the chain). Defaults to [].
+ * @param ConstructorArgs Should refer to the constructor arguments of the new class (= the last mixin in the chain). Defaults to any[].
  * @returns The returned type is a new class type, with recursive class <-> instance support.
  */
-type AsClass<Class, Instance, ConstructorArgs extends any[] = []> = Omit<Class, "new"> & {
+type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Class, "new"> & {
     new (...args: ConstructorArgs): Instance & {
         ["constructor"]: AsClass<Class, Instance, ConstructorArgs>;
     };

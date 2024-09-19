@@ -498,10 +498,10 @@ export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) 
  * Parameters and return:
  * @param Class Should refer to the type of the merged class type. For fluency it's not required that it's a ClassType (the "new" part will be omitted anyhow).
  * @param Instance Should refer to the type of the merged class instance.
- * @param ConstructorArgs Should refer to the constructor arguments of the new class (= the last mixin in the chain). Defaults to [].
+ * @param ConstructorArgs Should refer to the constructor arguments of the new class (= the last mixin in the chain). Defaults to any[].
  * @returns The returned type is a new class type, with recursive class <-> instance support.
  */
-export type AsClass<Class, Instance, ConstructorArgs extends any[] = []> = Omit<Class, "new"> & {
+export type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Class, "new"> & {
     // The ["constructor"] part is optional, but provides a typed link to the static side and back recursively.
     new (...args: ConstructorArgs): Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; };
 };
