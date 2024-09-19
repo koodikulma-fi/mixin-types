@@ -1,9 +1,4 @@
 
-## TODO:
-- Finish docs:
-    5. Constructor args
-    6. Using instanceof
-
 ## WHAT
 
 `mixin-types` provides typing tools related to mixins as well as two simple JS functions (`Mixins` and `MixinsWith`).
@@ -34,7 +29,7 @@ The documentation below explains how to set up and use mixins in various circums
 
 - For sequencing simple mixins, use the `Mixins` and `MixinsWith` methods.
 
-### Using `Mixins`
+### Using `Mixins` (for a sequence of mixins)
 
 ```typescript
 
@@ -79,7 +74,7 @@ class MyManualMix extends addMixin3<MyInfo>(addMixin2(addMixin1<MyInfo>(Object))
 
 ```
 
-### Using `MixinsWith`
+### Using `MixinsWith` (for a mixin sequence with a base class)
 
 ```typescript
 
