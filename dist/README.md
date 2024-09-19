@@ -21,7 +21,7 @@ The documentation below explains how to set up and use mixins in various circums
 ## 1. GENERAL GUIDELINES
 - For a clean overall mixin architecture, keep the purpose of each mixin simple and detached from each other.
 - If a mixin is dependent on another mixin, consider _including_ it, instead of _requiring_ it.
-    * For example: `mixinMyBigMixin = (Base) => return class MyBigMixin extends mixinMySmallMixin(Base) { ... }`.
+    * For example: `mixinMyMonster = (Base) => return class MyMonster extends mixinMyCreature(Base) { ... }`.
 - Keep constructor arguments clean and minimal (and their count fixed), or preferably don't use them at all.
 - Finally, use mixins as simple base blocks to create your "final" classes. Don't use mixins excessively.
 - That said, mixins can be wonderfully useful and provide an easy way to avoid writing same code many times.
