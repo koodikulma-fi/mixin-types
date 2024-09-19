@@ -134,7 +134,7 @@ class MyManualMix extends addMixin3<MyInfo>(addMixin2<MyInfo>(addMixin1(MyBase<M
 ```typescript
 
 // You might want to pass the Info arg further to a mixed base, but TS won't allow it. 
-// .. In the lines below, <Info> is red-underlined, as base class expressions cannot ref. class type params.
+// .. In the lines below, <Info> is red-underlined, as base class expr. cannot ref. class type params.
 class MyClass_Wish<Info extends Record<string, any> = {}> extends Mixins(addMixin1<Info>) { }
 class MyClass_Wish_Manual<Info extends Record<string, any> = {}> extends addMixin1<Info>(Object) { }
 
@@ -364,7 +364,7 @@ class MyMix<AddSignals extends SignalsRecord = {}> extends (addSignalBoy(MyBase)
         (this as MyMix).sendSignal("test", 1);
     }
 }
-// .. Interface explicitly typed.
+// .. Interface explicitly typed - including inheritance from SignalBoy and MyBase.
 interface MyMix<AddSignals extends SignalsRecord = {}>
     extends SignalBoy<MySignals & AddSignals>, MyBase { }
 
