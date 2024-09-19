@@ -228,11 +228,13 @@ export function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(...
  * }
  * 
  * // 2. Secondly, define the BaseBoy interface (needed above) explicitly, while the optional class loosely.
- * // .. Since we chose to use "single mixin + retyping", let's retype now to avoid circularity: `as any as typeof MyBase`.
- * export class BaseBoy<BaseNames extends string = string> extends (addBaseBoy(MyBase) as any as typeof MyBase) { }
+ * // .. Since we chose to use "single mixin + retyping", let's retype now to avoid circularity: `as any as ClassType`.
+ * // .. Note that we don't need to use `as any as typeof MyBase` since the interface already extends MyBase.
+ * export class BaseBoy<BaseNames extends string = string> extends (addBaseBoy(MyBase) as any as ClassType) { }
  * // .. The interface must match the class (in name and type args), and holds the explicit typing.
+ * // .. Note that if BaseBoy would also require a mixin would write: `extends MyBase, MyOtherMixin {`
  * export interface BaseBoy<BaseNames extends string = string> extends MyBase {
- *    testBase(baseName: BaseNames): boolean;
+ *   testBase(baseName: BaseNames): boolean;
  * }
  * 
  * // Test.

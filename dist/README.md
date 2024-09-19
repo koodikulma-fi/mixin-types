@@ -215,7 +215,7 @@ export type SignalsRecord = Record<string, (...args: any[]) => void>;
 export class SignalBoy<Signals extends SignalsRecord = {}> extends _addSignalBoy() { }
 // Or alternatively use one mixin but retype with `as any as ClassType`.
 // .. Note that it's not enough with `as ClassType` (circularity).
-// .. Note also that if we had a base class would use: `as any as typeof MyBase` here.
+// .. Note also that if we had a base class would still use: `as any as ClassType` here.
 // export class SignalBoy<Signals extends SignalsRecord = {}> extends (addSignalBoy() as any as ClassType) { }
 
 // Let's declare the interface with explicit typing.
