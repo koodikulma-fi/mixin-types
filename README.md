@@ -7,13 +7,13 @@ The npm package can be found with: [mixin-types](https://www.npmjs.com/package/m
 
 The documentation below explains how to set up and use mixins in various circumstances.
 1. [General guidelines](#1-general-guidelines)
-2. Simple mixins
-3. Passing generic params from class (to simple mixins)
-4. Complex mixins and generic parameters
-5. Constructor arguments
-6. Using `instanceof`
-7. Typing tools
-8. Shortcut - 2 types to solve it all
+2. [Simple mixins](#2-simple-mixins)
+3. [Passing generic params from class (to simple mixins)](#3-passing-generic-parameters-from-class-to-simple-mixins)
+4. [Complex mixins and generic parameters](#4-complex-mixins-and-generic-parameters)
+5. [Constructor arguments](#5-constructor-arguments)
+6. [Using `instanceof`](#6-using-instanceof-with-mixins)
+7. [Typing tools](#7-typing-tools)
+8. [Shortcut - 2 types to solve it all](#8-shortcut---2-types-to-solve-it-all)
 
 ---
 
@@ -31,7 +31,7 @@ The documentation below explains how to set up and use mixins in various circums
 
 - For sequencing many mixins together, use the `Mixins` and `MixinsWith` methods.
 
-### Using `Mixins` (for a sequence of mixins)
+### 2.1. Using `Mixins` (for a sequence of mixins)
 
 ```typescript
 
@@ -76,7 +76,7 @@ class MyManualMix extends addMixin3<MyInfo>(addMixin2(addMixin1<MyInfo>(Object))
 
 ```
 
-### Using `MixinsWith` (for a mixin sequence with a base class)
+### 2.2. Using `MixinsWith` (for a mixin sequence with a base class)
 
 ```typescript
 
@@ -128,7 +128,7 @@ class MyManualMix extends addMixin3<MyInfo>(addMixin2<MyInfo>(addMixin1(MyBase<M
 - To pass in generic parameters from a class, there's an inherent problem: _Base class expressions cannot reference class type parameters_.
 - This problem can be overcome using the trick of declaring a matching `interface` for the new `class`.
 
-### Using `Mixins` and `MixinsInstance`
+### 3.1. Using `Mixins` and `MixinsInstance`
 
 ```typescript
 
@@ -159,7 +159,7 @@ myClass.num === value; // The type is `boolean`, and outcome `true` on JS side.
 
 ```
 
-### Using `MixinsWith` and `MixinsInstanceWith`
+### 3.2. Using `MixinsWith` and `MixinsInstanceWith`
 
 ```typescript
 
@@ -202,7 +202,7 @@ myClass.constructor.STATIC_ONE; // number
     2. Issues with circular reference with explicit typing. -> Retype as `ClassType` or use private + public mixin.
     3. Minor issue with losing the type of the base class. -> Can use `typeof MyBase` or `AsMixin` helper.
 
-### 1. Excessive deepness -> explicit typing
+### 4.1. Excessive deepness -> explicit typing
 - Firstly, to overcome the problem of excessive deepness of the types, the solution is to use explicit typing.
 - So the mixin function itself should define explicitly what it returns, so that typescript won't have to interpret it from the code.
 
@@ -249,7 +249,7 @@ function addSignalBoy_CIRCULAR<Data = {}, TBase extends ClassType = ClassType>(B
 
 ```
 
-### 2. Avoiding circular references
+### 4.2. Avoiding circular references
 - To avoid the problem with circularity there are at least 2 main working approaches.
     1. Retype the internal use of the mixin: `class SignalBoy extends (addSignalBoy() as any as ClassType) {}`.
     2. Use a separate private and public mixin. See example below: `class SignalBoy extends _addSignalBoy() {}`.
@@ -316,7 +316,7 @@ export function addSignalBoy_ALT<
 
 ```
 
-### 3. Minor issue with losing the type of the base class
+### 4.3. Minor issue with losing the type of the base class
 
 - So the above works and there's no circularity and issues with deepness or when used externally.
 - The only minor issue is that the `addSignalBoy` above loses the automated BaseClass type from the actual argument.
@@ -382,7 +382,7 @@ myMix.constructor.DEFAULT_TIMEOUT; // number | null
 
 ## 5. CONSTRUCTOR ARGUMENTS
 
-### Rules of thumb
+### 5.1. Rules of thumb
 - Generally speaking, you should prefer _not_ using constructor arguments in mixins.
     * When needed, keep them simple, and use fixed number of arguments (eg. not 1-3 args, but eg. 2).
     * Note also that it's not possible to automate typing for constructor arguments (see the code example below).
@@ -392,11 +392,11 @@ myMix.constructor.DEFAULT_TIMEOUT; // number | null
 - It's then the responsibility of the sequence composer to make sure the flow makes sense and that constructor args flow as expected.
 - And it's the responsibility of individual mixins to keep constuctor args clean, and to always expect unknown arguments to be passed further: `constructor(myStuff: Stuff, ...args: any[]) { super(...args); }`.
 
-### Why cannot the arguments be automated?
+### 5.2. Why cannot the arguments be automated?
 - The simple answer is that it's _not known how mixins use the constructor args_.
 - The below example demonstrations this point while showcasing how to use constructor arguments.
 
-### Using constructor args
+### 5.3. Using constructor args
 
 ```typescript
 
@@ -488,12 +488,10 @@ myMonster.settings; // any
 
 ## 7. TYPING TOOLS
 
-## TypeScript tools
-
 - As is obvious from the implementations `Mixins` and `MixinsWith`, the JS side of mixins is trivial.
 - The magic happens on the TS side, and sometimes you might need to use the TS tools specifically.
 
-### Simple TS helpers
+### 7.1. Simple TS helpers
 
 ```typescript
 
@@ -521,7 +519,7 @@ export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) 
 
 ```
 
-### Mixin TS helpers: AsClass
+### 7.2. Mixin TS helpers: AsClass
 
 ```typescript
 
@@ -554,7 +552,7 @@ mySubClass.constructor.SOMETHING_STATIC; // number;
 
 ```
 
-### Mixin TS helpers: AsMixin
+### 7.3. Mixin TS helpers: AsMixin
 
 ```typescript
 
@@ -594,7 +592,7 @@ class MyMix2 extends (addMyMixin as AsMixin<MyMixin<MyInfo>>)(MyBase) { } // Get
 
 ```
 
-### Mixin TS helpers: EvaluateMixinChain
+### 7.4. Mixin TS helpers: EvaluateMixinChain
 
 ```typescript
 
@@ -637,7 +635,7 @@ type EvalMixins7 = EvaluateMixinChain<[Mixin1, Mixin2, (Base: ClassType) => Clas
 
 ```
 
-### Mixin TS helpers: `MergeMixins<Mixins, ConstructorArgs?, Class?, Instance?>`
+### 7.5. Mixin TS helpers: `MergeMixins<Mixins, ConstructorArgs?, Class?, Instance?>`
 - Intersect mixins to a new clean class. The core method for the variants.
 - Note that if the mixins contain dependencies of other mixins, should type the dependencies fully to avoid unknown. See below.
 
@@ -755,7 +753,7 @@ type MyBaseMix = MergeMixinsWith<typeof MyBaseClass, MyMixinsArray>;
 
 ```
 
-### Mixin TS helpers: `MixinsInstanceWith<BaseClass, Mixins>`
+### 7.6. Mixin TS helpers: `MixinsInstanceWith<BaseClass, Mixins>`
 - Exactly like MergeMixinsWith (see its notes) but returns the instance type. Useful for creating a class interface.
 
 ```typescript
