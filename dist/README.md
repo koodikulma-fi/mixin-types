@@ -553,7 +553,7 @@ export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) 
 
 ```
 
-### 8.2. Mixin TS helpers: AsClass
+### 8.2. Mixin TS helpers: `AsClass<Class, Instance, ConstructorArgs?>`
 
 ```typescript
 
@@ -586,7 +586,7 @@ mySubClass.constructor.SOMETHING_STATIC; // number;
 
 ```
 
-### 8.3. Mixin TS helpers: AsMixin
+### 8.3. Mixin TS helpers: `AsMixin<MixinInstance>`
 
 ```typescript
 
@@ -626,7 +626,7 @@ class MyMix2 extends (addMyMixin as AsMixin<MyMixin<MyInfo>>)(MyBase) { } // Get
 
 ```
 
-### 8.4. Mixin TS helpers: EvaluateMixinChain
+### 8.4. Mixin TS helpers: `EvaluateMixinChain<Mixins, BaseClass?>`
 
 ```typescript
 
