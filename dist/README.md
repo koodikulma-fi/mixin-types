@@ -390,7 +390,9 @@ myMix.constructor.DEFAULT_TIMEOUT; // number | null
 
 ```typescript
 
-// Let's say we have two (simple) mixins: addDataMan and addDataMonster.
+// Let's say we have two (simple) mixins: addDataMan, and addDataMonster that requires addDataMan.
+
+// DataMan.
 // .. Let's define interfaces for DataMan with two constructor args (data: Data, settings: Settings).
 interface DataManType<Data = {}, Settings = {}> extends
     ClassType<DataMan<Data, Settings>, [data: Data, settings: Settings, ...args: any[]]> {}
@@ -400,19 +402,25 @@ interface DataMan<Data = {}, Settings = {}> {
     settings: Settings;
 }
 // .. DataMan uses args for (data: Data, settings: Settings) and requires just ClassType base.
-function addDataMan<Data = {}, Settings = {}, TBase extends ClassType = ClassType>(Base: TBase): DataManType<Data, Settings> & TBase {
+function addDataMan<
+    Data = {},
+    Settings = {},
+    TBase extends ClassType = ClassType
+>(Base: TBase): DataManType<Data, Settings> & TBase {
     return class DataMan extends Base {
         data: Data;
         settings: Settings;
-        // See trick in DataMonster that would allow using `(data: Data, settings: Settings, ...args: any[])`.
+        // See trick in DataMonster for nice args.
+        // .. Then could be: `(data: Data, settings: Settings, ...args: any[])`
         constructor(...args: any[]) {
-            super(...args.slice(2)); // It's a bit ugly like this.
+            super(...args.slice(2));
             this.data = args[0] || {};
             this.settings = args[1] || {};
         }
     } as any; // We have explicitly typed the return.
 }
-// .. DataMonster has (stuff: Stuff) as args and requires DataManType.
+
+// DataMonster has (stuff: Stuff) as args and requires DataManType.
 function addDataMonster<
     Stuff extends Partial<{ data: any; settings: any; }> = {},
     TBase extends DataManType = DataManType<Stuff["data"], Stuff["settings"]>
@@ -432,8 +440,7 @@ function addDataMonster<
 }
 
 // Finally, as is evident, we cannot just add up the args based on order of mixins.
-// .. This is because some might manipulate the args of others.
-// .. So, it's really just always the _last in the chain_ that defines the arguments, while all pass them further.
+// .. It's simply always the _last in the chain_ that defines the args, while all pass them on.
 type MyStuff = { data: { something: boolean; }; settings: any; };
 class MyMonster extends Mixins(addDataMan<MyStuff["data"], MyStuff["settings"]>, addDataMonster<MyStuff>) {
     test() {
