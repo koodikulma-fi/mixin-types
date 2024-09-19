@@ -262,7 +262,8 @@ function addSignalBoy_CIRCULAR<Data = {}, TBase extends ClassType = ClassType>(B
 // - Mixin (private) - //
 
 // For local use only.
-// .. For clarity of usage and avoid problems with deepness, we don't use the <Data> here at all and return ClassType.
+// .. For clarity of usage and avoid problems with deepness,
+// .. we don't use the <Data> here at all and return ClassType.
 function _addSignalBoy(Base?: ClassType): ClassType {
     
     // Return extended class using simple non-typed variants inside.
@@ -364,7 +365,8 @@ class MyMix<AddSignals extends SignalsRecord = {}> extends (addSignalBoy(MyBase)
     }
 }
 // .. Interface explicitly typed.
-interface MyMix<AddSignals extends SignalsRecord = {}> extends SignalBoy<MySignals & AddSignals>, MyBase { }
+interface MyMix<AddSignals extends SignalsRecord = {}>
+    extends SignalBoy<MySignals & AddSignals>, MyBase { }
 
 // Test.
 const myMix = new MyMix<{ sendDescription: (title: string, content: string) => void; }>();
@@ -374,7 +376,8 @@ myMix.listenTo("sendDescription", (title, content) => {});
 myMix.sendSignal("sendDescription", "Mixins", "So many things.");
 myMix.constructor.DEFAULT_TIMEOUT; // number | null
 
-// And finally, if you need to make MyMix be a mixin in addition to class, just repeat what is done here for SignalBoy.
+// Finally, if you need to make MyMix be a mixin (in addition to a class),
+// .. just repeat what is done here for SignalBoy.
 
 
 ```
