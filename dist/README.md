@@ -784,7 +784,7 @@ type MyBaseMix = MergeMixinsWith<typeof MyBaseClass, MyMixinsArray>;
 
 ```
 
-### 8.6. Mixin TS helpers: `MixinsInstanceWith<BaseClass, Mixins>`
+### 8.6. Mixin TS helpers: `MixinsInstanceWith<BaseClass, Mixins, ConstructorArgs?>`
 - Exactly like MergeMixinsWith (see its notes) but returns the instance type. Useful for creating a class interface.
 
 ```typescript
@@ -793,8 +793,10 @@ type MyBaseMix = MergeMixinsWith<typeof MyBaseClass, MyMixinsArray>;
 
 export type MixinsInstanceWith<
     BaseClass extends ClassType,
-    Mixins extends Array<(Base: ClassType) => ClassType>
-> = InstanceType<MergeMixins<Mixins, BaseClass, InstanceType<BaseClass>>>;
+    Mixins extends Array<(Base: ClassType) => ClassType>,
+    // Optional. Define ConstructorArgs, defaults to the args of the _last mixin_.
+    ConstructorArgs extends any[] = UnknownProcessToGetLastMixinArgs
+> = InstanceType<MergeMixins<Mixins, ConstructorArgs, BaseClass, InstanceType<BaseClass>>>;
 
 
 // - Example - //
