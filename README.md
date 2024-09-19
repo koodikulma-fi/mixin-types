@@ -492,9 +492,9 @@ myMonster.settings; // any
         - Of course this is not reliable unless you only include classes whose name is unique, and you make sure all your mixins use the respective class names systematically.
         - For example: `const addMyMixin = (Base) => class MyMixin extends Base {}` produces a new class whose name is always `MyMixin`. You could also have a matching stand-alone class: `class MyMixin extends addMyMixin(Object) {}`.
         - Finally, to do the `instanceof` like evaluation, you would instead hold a customly built tree of class names, implying the heritance of _known classes_ (in your system).
-            * For example: `const CLASS_TREE: Record<string, string[]> = {}`, where each key is a class name, and the value is which class/mixins it instead.
+            * For example: `const CLASS_TREE: Record<string, string[]> = {}`, where each key is a class name, and the value is which class/mixins it extends.
             * For example: `{ "MyMixin": [] }` since it extends no other classes/mixins.
-            * The method itself would be like. `isInstanceOf(Class: ClassType, className: string): boolean { return Class.name === className || CLASS_TREE[Class.name]?.includes(className) || false; }`
+            * The method itself would be like: `isInstanceOf(Class: ClassType, className: string): boolean { return Class.name === className || CLASS_TREE[Class.name]?.includes(className) || false; }`
 - It's also worth noting that the larger architectural choices at the conceptual level have reverberations all the way down to these details.
     * For example, questions about using a complex tree of classes with inheritance vs. using a modular structure.
     * In a tree of classes you might use mixins as base building blocks (nor part of the tree), whereas in a more modular structure you wouldn't really use mixins at all for the modules (or again, as base building blocks for modules). This is because, mixins are essentially an alternative (or an implementation) of modularity, although tied to class inheritance: anyway, you just pick your modules, like you pick your mixins.
