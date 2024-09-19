@@ -14,7 +14,7 @@ The documentation below explains how to set up and use mixins in various circums
 6. [Using `instanceof`](#6-using-instanceof-with-mixins)
 7. [JavaScript implementations](#7-javascript-implementations)
 8. [TypeScript tools](#8-typescript-tools)
-9. [Shortcut - 2 types to solve it all](#8-shortcut---2-types-to-solve-it-all)
+9. [Shortcut - 2 simple types to solve it all](#9-shortcut---2-simple-types-to-solve-it-all)
 
 ---
 
@@ -833,7 +833,7 @@ myClass.constructor.STATIC_ONE; // number
 
 ---
 
-## 9. SHORTCUT - 2 TYPES TO SOLVE IT ALL
+## 9. SHORTCUT - 2 SIMPLE TYPES TO SOLVE IT ALL
 - In practice, you often might just need two very simple types from the library: `ClassType` and `AsClass`.
 - In case they are all you need, you might just as well copy them to your types, as they are very simple.
 
