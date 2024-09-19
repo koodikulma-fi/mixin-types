@@ -133,24 +133,31 @@ class MyManualMix extends mixinTest3<MyInfo>(mixinTest2<MyInfo>(mixinTest1(MyBas
 
 ```typescript
 
+// Prepare for the example below.
+type MyInfo = { something: boolean; };
+const mixinTestGen = <Info = {}>(Base: ClassType) => class TestGen extends Base {
+    num: number = 5;
+    testMe(testInfo: Info): void {}
+}
+
 // You might want to pass the Info arg further to a mixed base, but TS won't allow it. 
 // .. In the lines below, <Info> is red-underlined, as base class expr. cannot ref. class type params.
-class MyClass_Wish<Info extends Record<string, any> = {}> extends mixins(mixinTest1<Info>) { }
-class MyClass_Wish_Manual<Info extends Record<string, any> = {}> extends mixinTest1<Info>(Object) { }
+class MyClass_Wish<Info extends Record<string, any> = {}> extends mixins(mixinTestGen<Info>) { }
+class MyClass_Wish_Manual<Info extends Record<string, any> = {}> extends mixinTestGen<Info>(Object) { }
 
 // So instead do to this.
-// 1. Create a class extending mixinTest1 using `as ClassType` to loosen the base class type.
+// 1. Create a class extending mixinTestGen using `as ClassType` to loosen the base class type.
 // .. Remarkably, _after_ setting up the interface below, we do have access to the base class even inside the extending class.
 //
-class MyClass<Info extends Record<string, any> = {}> extends (mixins(mixinTest1) as ClassType) {
+class MyClass<Info extends Record<string, any> = {}> extends (mixins(mixinTestGen) as ClassType) {
     myMethod(key: keyof Info & string): number { return this.num; } // `num` is a recognized class member.
 }
 // 2. Create a matching interface extending what we actually want to extend.
 // .. Another remarkable thing is that there's no need to actually retype the class in the interface.
 //
-interface MyClass<Info extends Record<string, any> = {}> extends MixinsInstance<[typeof mixinTest1<Info>]> { }
+interface MyClass<Info extends Record<string, any> = {}> extends MixinsInstance<[typeof mixinTestGen<Info>]> { }
 // .. The line below would work equally well for a single mixin case like this.
-// interface MyClass<Info extends Record<string, any> = {}> extends InstanceType<ReturnType<typeof mixinTest1<Info>>> { }
+// interface MyClass<Info extends Record<string, any> = {}> extends InstanceType<ReturnType<typeof mixinTestGen<Info>>> { }
 
 // Test the result, and prove the claim in step 2.
 const myClass = new MyClass<MyInfo>();
@@ -164,16 +171,27 @@ myClass.num === value; // The type is `boolean`, and outcome `true` on JS side.
 
 ```typescript
 
+
+// Prepare for the example below.
+type MyInfo = { something: boolean; };
+class MyBase<Info = {}> {
+    static STATIC_ONE = 1;
+    testInfo(info: Info): void {}
+}
+const mixinTestGen = (Base: ClassType) => class TestGen extends Base {
+    someMember: number = 5;
+}
+
 // You might want to pass the Info arg further to a mixed base, but TS won't allow it. 
 // .. In the lines below, the <Info>s are red-underlined, as base class expressions cannot ref. class type params.
-class MyClass_Wish<Info extends Record<string, any> = {}> extends mixinsWith(MyBase<Info>, mixinTest1) { }
-class MyClass_Wish_Manual<Info extends Record<string, any> = {}> extends mixinTest1(MyBase<Info>) { }
+class MyClass_Wish<Info extends Record<string, any> = {}> extends mixinsWith(MyBase<Info>, mixinTestGen) { }
+class MyClass_Wish_Manual<Info extends Record<string, any> = {}> extends mixinTestGen(MyBase<Info>) { }
 
 // So instead do to this.
-// 1. Create a class extending MyBase, mixinTest1 using `as ClassType` to loosen the base class type.
+// 1. Create a class extending MyBase, mixinTestGen using `as ClassType` to loosen the base class type.
 // .. Remarkably, _after_ setting up the interface below, we do have access to the base class even inside the extending class.
 //
-class MyClass<Info extends Record<string, any> = {}> extends (mixinsWith(MyBase, mixinTest1) as ClassType) {
+class MyClass<Info extends Record<string, any> = {}> extends (mixinsWith(MyBase, mixinTestGen) as ClassType) {
     myMethod(key: keyof Info & string): number { return this.someMember; } // `someMember` is a recognized class member.
 }
 
@@ -181,7 +199,7 @@ class MyClass<Info extends Record<string, any> = {}> extends (mixinsWith(MyBase,
 // .. Another remarkable thing is that there's no need to actually retype the class in the interface. Just declare it.
 //
 interface MyClass<Info extends Record<string, any> = {}>
-    extends MixinsInstanceWith<typeof MyBase<Info>, [typeof mixinTest1]> { }
+    extends MixinsInstanceWith<typeof MyBase<Info>, [typeof mixinTestGen]> { }
 
 // Test the result, and prove the claim in step 2.
 const myClass = new MyClass<MyInfo>();
