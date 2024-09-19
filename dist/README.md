@@ -472,8 +472,8 @@ myMonster.settings; // any
     * In fact, you don't even have a reference to them (unless you have a separate class prepared).
     * This is a core limitation of mixins when implemented as extensions to native classes.
 - Examples of working around.
-    * 1. Use mixins only as building blocks to compose the "main classes" and use `instanceof` for them.
-    * 2. Manual implementation.
+    - 1. Use mixins only as building blocks to compose the "main classes" and use `instanceof` for them.
+    - 2. Manual implementation.
         - Add `static CLASS_NAMES: string[]` member that is required for all mixins (and classes) in your system. Let's call it `BaseClassType`.
         - Each time a mixin extends a class, it should add to its CLASS_NAMES its unique mixin (class) name.
             * Likewise classes would add them on the static side: `static CLASS_NAMES = [...MyBaseClass.CLASS_NAMES, "MyClass"]`.
