@@ -212,7 +212,7 @@ myClass.constructor.STATIC_ONE; // number
 // - Class - //
 
 // Some internal typing.
-export type SignalsRecord = Record<string, (...args: any[]) => void>;
+type SignalsRecord = Record<string, (...args: any[]) => void>;
 
 // Let's declare SignalBoy class using private untyped `_mixinSignalBoy(Object?: ClassType) => ClassType` as the basis.
 export class SignalBoy<Signals extends SignalsRecord = {}> extends _mixinSignalBoy() { }
@@ -504,6 +504,7 @@ myMonster.settings; // any
 
 // On the JS side, the feature is implemented like this.
 // .. Usage: `class MyClass extends mixins(mixinTest1, mixinTest2) { }`.
+// .. There's also `MixinsFunc` type for the TS side separately.
 export function mixins(...mixins) {
     return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Object);
 }
@@ -516,6 +517,7 @@ export function mixins(...mixins) {
 
 // On the JS side, the feature is implemented like this.
 // .. Usage: `class MyClass extends mixinsWith(BaseClass, mixinTest1, mixinTest2) { }`.
+// .. There's also `MixinsWithFunc` type for the TS side separately.
 export function mixinsWith(Base, ...mixins) {
     return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Base);
 }
@@ -535,25 +537,25 @@ export function mixinsWith(Base, ...mixins) {
 
 // Array tools.
 /** Check if a tuple contains the given value type. */
-export type IncludesValue<Arr extends any[], Val extends any> = { [Key in keyof Arr]: Arr[Key] extends Val ? true : false }[number] extends false ? false : true;
+type IncludesValue<Arr extends any[], Val extends any> = { [Key in keyof Arr]: Arr[Key] extends Val ? true : false }[number] extends false ? false : true;
 
 // Iterators.
 /** Iterate down from 20 to 0. If iterates at 0 returns never. If higher than 20, returns 0. (With negative or other invalid returns all numeric options type.)
  * - When used, should not input negative, but go down from, say, `Arr["length"]`, and stop after 0.
  */
-export type IterateBackwards = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...0[]];
+type IterateBackwards = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...0[]];
 /** Iterate up from 0 to 20. If iterates at 20 or higher returns never. (With negative or other invalid returns all numeric options type.)
  * - When used, should not input negative, but go up from 0 until `Arr["length"]`.
  */
-export type IterateForwards = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...never[]];
+type IterateForwards = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...never[]];
 
 // Class tools.
 /** Get the type for class constructor arguments. */
-export type GetConstructorArgs<T> = T extends new (...args: infer U) => any ? U : never;
+type GetConstructorArgs<T> = T extends new (...args: infer U) => any ? U : never;
 /** Get the type for class constructor return. */
-export type GetConstructorReturn<T> = T extends new (...args: any[]) => infer U ? U : never;
+type GetConstructorReturn<T> = T extends new (...args: any[]) => infer U ? U : never;
 /** Get the type for class from class instance - the opposite of `InstanceType`. Optionally define constructor args. */
-export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
+type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
 
 ```
 
@@ -563,7 +565,7 @@ export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) 
 
 // - Arguments - //
 
-export type AsClass<
+type AsClass<
     Class, // Should refer to the type of the merged class type. For fluency type is any.
     Instance, // Should refer to the type of the merged class instance.
     // Optional. Can be used to define type constructor arguments for the resulting class.
@@ -596,7 +598,7 @@ mySubClass.constructor.SOMETHING_STATIC; // number;
 
 // - Arguments - //
 
-export type AsMixin<
+type AsMixin<
     // Just the instance type of the mixin class.
     // .. If reading from the mixin func: `InstanceType<ReturnType<typeof mixinMyTest>>`
     // .. But most often more like: `MyTest<SomeInfo>`, where MyTest is interface (and class).
@@ -630,13 +632,13 @@ class MyMix2 extends (mixinMyTest as AsMixin<MyTest<MyInfo>>)(MyBase) { } // Get
 
 ```
 
-### 8.4. Mixin TS helpers: `EvaluateMixinChain<Mixins, BaseClass?>`
+### 8.4. Mixin TS helpers: `ValidateMixins<Mixins, BaseClass?>`
 
 ```typescript
 
 // - Arguments - //
 
-export type EvaluateMixinChain<
+type ValidateMixins<
     Mixins extends Array<any>,
     // Optional. Can be used to define type of the base class.
     BaseClass extends ClassType = ClassType
@@ -658,17 +660,17 @@ type Test1 = typeof mixinTest1<MyInfo>;
 type Test2 = typeof mixinTest2<MyInfo>;
 
 // Do some tests.
-type EvalMixins1 = EvaluateMixinChain<[Test1]>; // [typeof mixinTest1<MyInfo>]
-type EvalMixins2 = EvaluateMixinChain<[Test2]>; // [never]
-type EvalMixins3 = EvaluateMixinChain<[Test1, Test2]>; // [typeof mixinTest1<MyInfo>, typeof mixinTest2<MyInfo>]
-type EvalMixins4 = EvaluateMixinChain<[Test2, Test1]>; // [never, typeof mixinTest1<MyInfo>]
+type EvalMixins1 = ValidateMixins<[Test1]>; // [typeof mixinTest1<MyInfo>]
+type EvalMixins2 = ValidateMixins<[Test2]>; // [never]
+type EvalMixins3 = ValidateMixins<[Test1, Test2]>; // [typeof mixinTest1<MyInfo>, typeof mixinTest2<MyInfo>]
+type EvalMixins4 = ValidateMixins<[Test2, Test1]>; // [never, typeof mixinTest1<MyInfo>]
 type IsChain3Invalid = IncludesValue<EvalMixins3, never>; // false
 type IsChain4Invalid = IncludesValue<EvalMixins4, never>; // true
 
 // Funkier tests.
-type EvalMixins5 = EvaluateMixinChain<[Test1, Test2, "string"]>; // [..., never]
-type EvalMixins6 = EvaluateMixinChain<[Test1, Test2, () => {}]>; // [..., never]
-type EvalMixins7 = EvaluateMixinChain<[Test1, Test2, (Base: ClassType) => ClassType ]>; // All ok.
+type EvalMixins5 = ValidateMixins<[Test1, Test2, "string"]>; // [..., never]
+type EvalMixins6 = ValidateMixins<[Test1, Test2, () => {}]>; // [..., never]
+type EvalMixins7 = ValidateMixins<[Test1, Test2, (Base: ClassType) => ClassType ]>; // All ok.
 
 
 ```
@@ -709,9 +711,9 @@ type MyInfo = { test: boolean; };
 type Mixins = [typeof mixinTest1<MyInfo>, typeof mixinTest2<MyInfo>, typeof mixinTest3]; // Pass the MyInfo to all that need it.
 type MergedClassType = MergeMixins<Mixins>;
 
-// Extra. MergeMixins does not evaluate the chain. Do it with EvaluateMixinChain.
-type IsChainInvalid = IncludesValue<EvaluateMixinChain<Mixins>, never>; // false
-type IsChainInvalidNow = IncludesValue<EvaluateMixinChain<[Mixins[1], Mixins[0], Mixins[2]]>, never>; // true
+// Extra. MergeMixins does not evaluate the chain. Do it with ValidateMixins.
+type IsChainInvalid = IncludesValue<ValidateMixins<Mixins>, never>; // false
+type IsChainInvalidNow = IncludesValue<ValidateMixins<[Mixins[1], Mixins[0], Mixins[2]]>, never>; // true
 
 // Fake a class.
 const MergedClass = class MergedClass { } as unknown as MergedClassType;
@@ -732,7 +734,7 @@ mergedClass.name = "Mergy";
 
 // - Arguments - //
 
-export type MixinsInstance<
+type MixinsInstance<
     Mixins extends Array<(Base: ClassType) => ClassType>,
     // Optional. Define ConstructorArgs, defaults to the args of the _last mixin_.
     ConstructorArgs extends any[] = UnknownProcessToGetLastMixinArgs
@@ -776,7 +778,7 @@ myClass.num === value; // The type is `boolean`, and outcome `true` on JS side.
 
 // - Arguments - //
 
-export type MergeMixinsWith<
+type MergeMixinsWith<
     BaseClass extends ClassType,
     Mixins extends Array<(Base: ClassType) => ClassType>,
     // Optional. Define ConstructorArgs, defaults to the args of the _last mixin_.
@@ -798,7 +800,7 @@ type MyBaseMix = MergeMixinsWith<typeof MyBaseClass, MyTestsArray>;
 
 // - Arguments - //
 
-export type MixinsInstanceWith<
+type MixinsInstanceWith<
     BaseClass extends ClassType,
     Mixins extends Array<(Base: ClassType) => ClassType>,
     // Optional. Define ConstructorArgs, defaults to the args of the _last mixin_.
@@ -838,6 +840,27 @@ myClass.constructor.STATIC_ONE; // number
 
 ```
 
+### 8.7. Mixin TS funcs: `MixinsFunc<Mixins>` and `MixinsWithFunc<Base, Mixins>`
+- These are simply the types for the `mixins` and `mixinsWith` JS functions for reusing the same type logic.
+
+```typescript
+
+// - Arguments - //
+
+// For `mixins` function.
+type MixinsFunc = <
+    Mixins extends Array<(Base: ClassType) => ClassType>
+>(...mixins: ValidateMixins<Mixins>) => MergeMixins<Mixins>;
+
+// For `mixinsWith` function.
+type MixinsWithFunc = <
+    Base extends ClassType,
+    Mixins extends Array<(Base: ClassType) => ClassType>
+>(Base: Base, ...mixins: ValidateMixins<Mixins, Base>) => MergeMixinsWith<Base, Mixins>;
+
+
+```
+
 ---
 
 ## 9. SHORTCUT - 2 SIMPLE TYPES TO SOLVE IT ALL
@@ -847,7 +870,7 @@ myClass.constructor.STATIC_ONE; // number
 ```typescript
 
 /** Get class type from class instance type with optional constr. args. The opposite of `InstanceType`. */
-export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
+type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
 
 /** Re-type class.
  * Parameters and return:
@@ -856,7 +879,7 @@ export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) 
  * @param ConstructorArgs Constructor arguments of the new class. Defaults to any[].
  * @returns The returned type is a new class type, with recursive class <-> instance support.
  */
-export type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Class, "new"> & {
+type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Class, "new"> & {
     // The ["constructor"] part is optional, but provides a typed link to the static side and back recursively.
     new (...args: ConstructorArgs): Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; };
 };
