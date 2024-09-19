@@ -394,7 +394,10 @@ myMix.constructor.DEFAULT_TIMEOUT; // number | null
 - At the conceptual level, the constructor args of the mix should be defined for each mix explicitly.
     * This can be done either directly to a mix (with `MergeMixins` or `AsClass`) or by extending the mix with a class and use its constructor.
     * It's then the responsibility of the sequence composer to make sure the flow makes sense and that constructor args flow as expected.
-    * And it's the responsibility of individual mixins to keep constuctor args clean, and to always expect unknown arguments to be passed further: `constructor(myStuff: Stuff, ...args: any[]) { super(...args); }`.
+    * And it's the responsibility of individual mixins 1. to keep constuctor args clean, and 2. to always pass unknown args further.
+        - So essentially: `constructor(myStuff: Stuff, ...args: any[]) { super(...args); }`.
+        - However TS wants `(...args: any[])`, since:  _A mixin class must have a constructor with a single rest parameter of type 'any[]'._
+        - But we can work around it by a simple trick of `extends (Base as ClassType)` - see below.
 
 ### 5.2. Why cannot the arguments be automated?
 - The simple answer is that it's _not known how mixins use the constructor args_.
@@ -424,8 +427,8 @@ function addDataMan<
     return class DataMan extends Base {
         data: Data;
         settings: Settings;
-        // See trick in DataMonster for nice args.
-        // .. Then could be: `(data: Data, settings: Settings, ...args: any[])`
+        // Note. If we would use `extends (Base as ClassType)`,
+        // .. then we could use: `(data: Data, settings: Settings, ...args: any[])`
         constructor(...args: any[]) {
             super(...args.slice(2));
             this.data = args[0] || {};
@@ -443,9 +446,9 @@ function addDataMonster<
     DataMan<Stuff["data"], Stuff["settings"]>, // Instanced.
     [stuff?: Stuff, ...args: any[]] // Constructor args.
 > {
-    // Note. By using `(Base as ClassType)`, we can define constructor args more nicely.
-    // .. Otherwise gets error: _A mixin class must have a constructor with a single rest parameter of type 'any[]'._
-    return class DataMonster extends (Base as ClassType) {
+    // Note. By using `(Base as DataManType)`, we can define constructor args more nicely.
+    // .. Otherwise gets error about mixin constructor not being `any[]`.
+    return class DataMonster extends (Base as DataManType) {
         constructor(stuff?: Stuff, ...args: any[]) {
             // Remap the args.
             super(stuff?.data, stuff?.settings, ...args);
