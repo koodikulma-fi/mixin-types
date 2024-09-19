@@ -855,3 +855,5 @@ export type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Om
 };
 
 ```
+
+[Back to top](#what)
