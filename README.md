@@ -253,7 +253,7 @@ function addSignalBoy_CIRCULAR<Data = {}, TBase extends ClassType = ClassType>(B
 ### 4.2. Avoiding circular references
 - To avoid the problem with circularity there are at least 2 main working approaches.
     * #1 Retype the internal use of the mixin: `class SignalBoy extends (addSignalBoy() as any as ClassType) {}`.
-    * #2 Split mixin to private and public parts: `class SignalBoy extends _addSignalBoy() {}`.
+    * #2 Split the mixin to private and public parts: `class SignalBoy extends _addSignalBoy() {}`.
     * #3 DON'T: Use a non-class-linked dummy interface: eg. `interface _SignalBoy {}`. It leads to the problem of private/unexported interface.
 
 
@@ -360,8 +360,8 @@ class MyMix<AddSignals extends SignalsRecord = {}> extends (addSignalBoy(MyBase)
         super();
     }
     test() {
-        // Inside the class use `(this as MyMix<MySignals>)` to drop generics from Signals used.
-        (this as MyMix<MySignals>).sendSignal("test", 1);
+        // Inside the class use `(this as MyMix)` to drop generics from Signals used.
+        (this as MyMix).sendSignal("test", 1);
     }
 }
 // .. Interface explicitly typed.
