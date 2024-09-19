@@ -475,7 +475,7 @@ myMonster.settings; // any
 ---
 
 ## 6. USING `instanceof` WITH MIXINS
-- Why it won't "work" the way you might initially expect.
+- The reason why `instanceof` doesn't work the way you might initially expect.
     * As each mixin sequence produces a unique class, you cannot check mixin base classes using `instanceof`.
     * In fact, you don't even have a reference to them (unless you have a separate class prepared).
     * This is a core limitation of mixins when implemented as extensions to native classes.
