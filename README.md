@@ -1,7 +1,7 @@
 
 ## WHAT
 
-`mixin-types` is a tiny library providing typing tools for mixin classes and 2 simple JS funcs (`Mixins` and `MixinsWith`).
+`mixin-types` is a tiny library providing typing tools for mixin classes and 2 simple JS funcs (`mixins` and `mixinsWith`).
 
 The npm package can be found with: [mixin-types](https://www.npmjs.com/package/mixin-types). Contribute in GitHub: [koodikulma-fi/mixin-types.git](https://github.com/koodikulma-fi/mixin-types.git)
 
@@ -30,9 +30,9 @@ The documentation below explains how to set up and use mixins in various circums
 
 ## 2. SIMPLE MIXINS
 
-- For sequencing many mixins together, use the `Mixins` and `MixinsWith` methods.
+- For sequencing many mixins together, use the `mixins` and `mixinsWith` methods.
 
-### 2.1. Using `Mixins` (for a sequence of mixins)
+### 2.1. Using `mixins` (for a sequence of mixins)
 
 ```typescript
 
@@ -61,7 +61,7 @@ class MyMix extends mixins(mixinTest1<MyInfo>, mixinTest2, mixinTest3<MyInfo>) {
 // .. mixinTest3 is red-underlined (not assignable to `never`) as it requires mixinTest1.
 class MyFail extends mixins(mixinTest3) { }
 
-// If you use the above mixins manually, you get two problems (that's why `Mixins` function exists).
+// If you use the above mixins manually, you get two problems (that's why `mixins` function exists).
 // 1. The result won't give you the combined type. Though you could use MergeMixins or AsClass type to re-type it.
 // 2. You get problems with intermediate steps in the chain - unless you specifically want it.
 // +  The core reason for these problems is that each pair is evaluated separately, not as a continuum.
@@ -77,7 +77,7 @@ class MyManualMix extends mixinTest3<MyInfo>(mixinTest2(mixinTest1<MyInfo>(Objec
 
 ```
 
-### 2.2. Using `MixinsWith` (for a mixin sequence with a base class)
+### 2.2. Using `mixinsWith` (for a mixin sequence with a base class)
 
 ```typescript
 
@@ -109,7 +109,7 @@ class MyMix extends mixinsWith(MyBase<MyInfo>, mixinTest1, mixinTest2<MyInfo>, m
 // .. mixinTest2 is red-underlined as it requires MyBase, Object is not enough.
 class MyFail extends mixinsWith(Object, mixinTest2) { }
 
-// If you use the above mixins and base class manually, you get two problems (that's why `MixinsWith` function exists).
+// If you use the above mixins and base class manually, you get two problems (that's why `mixinsWith` function exists).
 // 1. The result won't give you the combined type. Though you could use MergeMixins or AsClass type to re-type it.
 // 2. You get problems with intermediate steps in the chain - unless you specifically want it.
 // +  The core reason for these problems is that each pair is evaluated separately, not as a continuum.
@@ -129,7 +129,7 @@ class MyManualMix extends mixinTest3<MyInfo>(mixinTest2<MyInfo>(mixinTest1(MyBas
 - To pass in generic parameters from a class, there's an inherent problem: _Base class expressions cannot reference class type parameters_.
 - This problem can be overcome using the trick of declaring a matching `interface` for the new `class`.
 
-### 3.1. Using `Mixins` and `MixinsInstance`
+### 3.1. Using `mixins` and `MixinsInstance`
 
 ```typescript
 
@@ -160,7 +160,7 @@ myClass.num === value; // The type is `boolean`, and outcome `true` on JS side.
 
 ```
 
-### 3.2. Using `MixinsWith` and `MixinsInstanceWith`
+### 3.2. Using `mixinsWith` and `MixinsInstanceWith`
 
 ```typescript
 
@@ -498,7 +498,7 @@ myMonster.settings; // any
 
 - For usage, see [simple mixins](#2-simple-mixins) and [passing generic params](#3-passing-generic-parameters-simple-cases) above.
 
-### 7.1. `Mixins`
+### 7.1. `mixins`
 
 ```typescript
 
@@ -511,7 +511,7 @@ export function mixins(...mixins) {
 
 ```
 
-### 7.2. `MixinsWith`
+### 7.2. `mixinsWith`
 
 ```typescript
 
@@ -528,7 +528,7 @@ export function mixinsWith(Base, ...mixins) {
 
 ## 8. TYPESCRIPT TOOLS
 
-- As is obvious from the implementations of `Mixins` and `MixinsWith`, the JS side of mixins is trivial.
+- As is obvious from the implementations of `mixins` and `mixinsWith`, the JS side of mixins is trivial.
 - The magic happens on the TS side, and sometimes you might need to use the TS tools specifically.
 
 ### 8.1. Simple TS helpers
