@@ -260,7 +260,7 @@ function addSignalBoy_CIRCULAR<Data = {}, TBase extends ClassType = ClassType>(B
 function _addSignalBoy(Base?: ClassType): ClassType {
     
     // Return extended class using simple non-typed variants inside.
-    return class _SignalBoy extends (Base || Object) {
+    return class SignalBoy extends (Base || Object) {
 
         public static DEFAULT_TIMEOUT: number | null = 0;
         public signals: Record<string, Array<(...args: any[]) => void>> = {};
@@ -343,7 +343,7 @@ myMix2.name; // string;
 
 ```
 
-### Extra - uplifting the above MyMix to have generic parameters
+### Extra - elevating MyMix to have generic parameters
 
 ```typescript
 
@@ -374,24 +374,78 @@ myMix.constructor.DEFAULT_TIMEOUT; // number | null
 ---
 
 ## 5. CONSTRUCTOR ARGUMENTS
-- Generally speaking, you should prefer not using constructor arguments in mixins.
-- When you use them, keep them very simple, preferably just taking 1 argument - definitely not say, 1-3 arguments.
-- There's also inherentely insolvable cases for trying to automate how constructor arguments map out.
-    * The simple answer is that the last mixin in the chain defines the arguments, and it's true (mostly).
-    * Even though it's passing on args: `constructor(myStuff: Stuff, ...args: any[]) { super(...args); }`.
-    * However it is actually impossible to know the ...args for sure (see case below) at the internal level.
-- To solve it all:
+- Generally speaking, you should prefer _not_ using constructor arguments in mixins.
+    * When needed, keep them simple, and use fixed number of arguments (eg. not 1-3 args, but eg. 2).
+    * Note also that it's not possible to automate how constructor arguments map out (see case further below).
+    * As it's always the _last mixin / extending class_ that defines the args - and as such, should do it explicitly.
+- Rules of thumb:
     * At the conceptual level, the constructor args of the mix should be defined for each mix explicitly.
-        - This can be done either directly to a mix (with MergeMixins or AsClass) or by extending the mix with a class and use its constructor.
-    * It's then the responsibility of the mixing master to make sure the sequence makes sense and that the constructor args flow as expected.
-        - And it's the responsibility of individual mixins to keep constuctor args simple and clean, and to expect unknown arguments to be passed further: `constructor(myStuff: Stuff, ...args: any[]) { super(...args); }`.
-- Note about why it can't be automated?
-    * You might be tempted to figure out a way to automate the arguments, but a simple case proves it's not possible - as it's not known how the mixins use the constructor arguments.
-    * For example, let's say we have `DataMan<Data, Settings>(data: Data, settings: Settings)`, and `DataMonster<Stuff>(stuff: Stuff)` mixins.
-    * And that DataMonster requires DataMan, and expects to feed arguments to it.
-    * However DataMonster actually has just one argument `stuff`, which presumably contains `{ data, settings }` that it passes to DataMan.
-    * Because of this, the situation is not: `(stuff, data, settings)` but instead `(stuff)`, and it actually makes no difference at all what the previous mixins require.
-    * In other words, it's really the last in the mix that decides the constructor args, even though it doesn't actually know what to pass (by definition of a mixin) - and thus, all mixins should just use `(stuff, ...args: any[])` or such and pass them args further down. And, we can not automate the args.
+        - This can be done either directly to a mix (with `MergeMixins` or `AsClass`) or by extending the mix with a class and use its constructor.
+    * It's then the responsibility of the sequence composer to make sure the flow makes sense and that constructor args flow as expected.
+    * And it's the responsibility of individual mixins to keep constuctor args clean, and to always expect unknown arguments to be passed further: `constructor(myStuff: Stuff, ...args: any[]) { super(...args); }`.
+
+### Example + Why cannot the arguments be automated?
+- The simple answer is that it's _not known how mixins use the constructor args_.
+- The below example demonstrations this point while showcasing how to use constructor arguments.
+
+```typescript
+
+// Let's say we have two (simple) mixins: addDataMan and addDataMonster.
+// .. Let's define interfaces for DataMan with two constructor args (data: Data, settings: Settings).
+interface DataManType<Data = {}, Settings = {}> extends
+    ClassType<DataMan<Data, Settings>, [data: Data, settings: Settings, ...args: any[]]> {}
+interface DataMan<Data = {}, Settings = {}> {
+    ["constructor"]: DataManType<Data, Settings>; // Link to the static side.
+    data: Data;
+    settings: Settings;
+}
+// .. DataMan uses args for (data: Data, settings: Settings) and requires just ClassType base.
+function addDataMan<Data = {}, Settings = {}, TBase extends ClassType = ClassType>(Base: TBase): DataManType<Data, Settings> & TBase {
+    return class DataMan extends Base {
+        data: Data;
+        settings: Settings;
+        // See trick in DataMonster that would allow using `(data: Data, settings: Settings, ...args: any[])`.
+        constructor(...args: any[]) {
+            super(...args.slice(2)); // It's a bit ugly like this.
+            this.data = args[0] || {};
+            this.settings = args[1] || {};
+        }
+    } as any; // We have explicitly typed the return.
+}
+// .. DataMonster has (stuff: Stuff) as args and requires DataManType.
+function addDataMonster<
+    Stuff extends Partial<{ data: any; settings: any; }> = {},
+    TBase extends DataManType = DataManType<Stuff["data"], Stuff["settings"]>
+>(Base: TBase): AsClass<
+    DataManType<Stuff["data"], Stuff["settings"]>, // Static.
+    DataMan<Stuff["data"], Stuff["settings"]>, // Instanced.
+    [stuff?: Stuff, ...args: any[]] // Constructor args.
+> {
+    // Note. By using `(Base as ClassType)`, we can define constructor args more nicely.
+    // .. Otherwise gets error: _A mixin class must have a constructor with a single rest parameter of type 'any[]'._
+    return class DataMonster extends (Base as ClassType) {
+        constructor(stuff?: Stuff, ...args: any[]) {
+            // Remap the args.
+            super(stuff?.data, stuff?.settings, ...args);
+        }
+    } as any; // We have explicitly typed the return.
+}
+
+// Finally, as is evident, we cannot just add up the args based on order of mixins.
+// .. This is because some might manipulate the args of others.
+// .. So, it's really just always the _last in the chain_ that defines the arguments, while all pass them further.
+type MyStuff = { data: { something: boolean; }; settings: any; };
+class MyMonster extends Mixins(addDataMan<MyStuff["data"], MyStuff["settings"]>, addDataMonster<MyStuff>) {
+    test() {
+        this.data; // { something: boolean; }
+        this.settings; // any
+    }
+}
+const myMonster = new MyMonster({ data: { something: false }, settings: null });
+myMonster.data; // { something: boolean; }
+myMonster.settings; // any
+
+```
 
 ---
 
