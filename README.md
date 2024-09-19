@@ -381,19 +381,22 @@ myMix.constructor.DEFAULT_TIMEOUT; // number | null
 ---
 
 ## 5. CONSTRUCTOR ARGUMENTS
+
+### Rules of thumb
 - Generally speaking, you should prefer _not_ using constructor arguments in mixins.
     * When needed, keep them simple, and use fixed number of arguments (eg. not 1-3 args, but eg. 2).
     * Note also that it's not possible to automate how constructor arguments map out (see case further below).
     * As it's always the _last mixin / extending class_ that defines the args - and as such, should do it explicitly.
-- Rules of thumb:
-    * At the conceptual level, the constructor args of the mix should be defined for each mix explicitly.
-        - This can be done either directly to a mix (with `MergeMixins` or `AsClass`) or by extending the mix with a class and use its constructor.
-    * It's then the responsibility of the sequence composer to make sure the flow makes sense and that constructor args flow as expected.
-    * And it's the responsibility of individual mixins to keep constuctor args clean, and to always expect unknown arguments to be passed further: `constructor(myStuff: Stuff, ...args: any[]) { super(...args); }`.
+- At the conceptual level, the constructor args of the mix should be defined for each mix explicitly.
+    * This can be done either directly to a mix (with `MergeMixins` or `AsClass`) or by extending the mix with a class and use its constructor.
+- It's then the responsibility of the sequence composer to make sure the flow makes sense and that constructor args flow as expected.
+- And it's the responsibility of individual mixins to keep constuctor args clean, and to always expect unknown arguments to be passed further: `constructor(myStuff: Stuff, ...args: any[]) { super(...args); }`.
 
-### Example + Why cannot the arguments be automated?
+### Why cannot the arguments be automated?
 - The simple answer is that it's _not known how mixins use the constructor args_.
 - The below example demonstrations this point while showcasing how to use constructor arguments.
+
+### In code
 
 ```typescript
 
