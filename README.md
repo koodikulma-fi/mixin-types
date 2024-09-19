@@ -486,9 +486,8 @@ myMonster.settings; // any
 ---
 
 ## 7. SHORTCUT (2 TYPES TO SOLVE IT ALL)
-- In practice, you often might just need two very simple types from the library.
-- These two types are: `ClassType` and `AsClass`.
-- As they are very simple and if that's all that's needed, you might alternatively just copy them to your types.
+- In practice, you often might just need two very simple types from the library: `ClassType` and `AsClass`.
+- In case they are all you need, you might just as well copy them to your types, as they are very simple.
 
 ```typescript
 
