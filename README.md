@@ -6,7 +6,7 @@
 The npm package can be found with: [mixin-types](https://www.npmjs.com/package/mixin-types). Contribute in GitHub: [koodikulma-fi/mixin-types.git](https://github.com/koodikulma-fi/mixin-types.git)
 
 The documentation below explains how to set up and use mixins in various circumstances.
-1. General guidelines
+1. [General guidelines](#1-general-guidelines)
 2. Simple mixins
 3. Passing generic params from class (to simple mixins)
 4. Complex mixins and generic parameters
