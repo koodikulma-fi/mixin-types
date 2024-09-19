@@ -321,7 +321,7 @@ export function addSignalBoy_ALT<
 ### 4.3. Minor issue with losing the type of the base class
 
 - So the above works and there's no circularity and issues with deepness or when used externally.
-- The only minor issue is that the `addSignalBoy` above loses the automated BaseClass type from the actual argument.
+- The only annoyance is that the `addSignalBoy` above loses the automated BaseClass type from the actual arg.
 - This can be overcome externally in two ways: 1. Provide it with `typeof MyBase`, 2. Use `AsMixin` type helper.
 
 ```typescript
