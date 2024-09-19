@@ -473,3 +473,22 @@ export type MixinsInstanceWith<
     Mixins extends Array<(Base: ClassType) => ClassType>,
     ConstructorArgs extends any[] = Mixins["length"] extends 0 ? any[] : GetConstructorArgs<ReturnType<Mixins[IterateBackwards[Mixins["length"]]]>>,
 > = InstanceType<MergeMixins<Mixins, ConstructorArgs, BaseClass, InstanceType<BaseClass>>>;
+
+
+// // - Unused - //
+//
+// /** Extends the base class with methods from other classes - last constructor gets applied.
+//  * - This is from: https://www.typescriptlang.org/docs/handbook/mixins.html
+//  */
+// export function extendClassMethods(BaseClass, withClasses: ClassType[]): void {
+//     withClasses.forEach((ThisClass) => {
+//         Object.getOwnPropertyNames(ThisClass.prototype).forEach((name) => {
+//             Object.defineProperty(
+//                 BaseClass.prototype,
+//                 name,
+//                 Object.getOwnPropertyDescriptor(ThisClass.prototype, name) ||
+//                 Object.create(null)
+//             );
+//         });
+//     });
+// }
