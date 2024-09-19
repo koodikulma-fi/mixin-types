@@ -360,7 +360,7 @@ class MyMix<AddSignals extends SignalsRecord = {}> extends (addSignalBoy(MyBase)
         super();
     }
     test() {
-        // Use `(this as MyMix<MySignals>)` to get a stable base for Signals used.
+        // Inside the class use `(this as MyMix<MySignals>)` to drop generics from Signals used.
         (this as MyMix<MySignals>).sendSignal("test", 1);
     }
 }
