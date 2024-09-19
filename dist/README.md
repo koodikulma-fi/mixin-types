@@ -1,7 +1,7 @@
 
 ## WHAT
 
-`mixin-types` provides typing tools related to mixins as well as two simple JS functions (`Mixins` and `MixinsWith`).
+`mixin-types` is a very small library providing typing tools for mixins and two simple JS functions (`Mixins` and `MixinsWith`).
 
 The npm package can be found with: [mixin-types](https://www.npmjs.com/package/mixin-types). Contribute in GitHub: [koodikulma-fi/mixin-types.git](https://github.com/koodikulma-fi/mixin-types.git)
 
@@ -12,7 +12,8 @@ The documentation below explains how to set up and use mixins in various circums
 4. Complex mixins and generic parameters
 5. Constructor arguments
 6. Using `instanceof`
-7. Shortcut - 2 types to solve it all
+7. Typing tools
+8. Shortcut - 2 types to solve it all
 
 ---
 
@@ -485,7 +486,323 @@ myMonster.settings; // any
 
 ---
 
-## 7. SHORTCUT - 2 TYPES TO SOLVE IT ALL
+## 7. TYPING TOOLS
+
+## TypeScript tools
+
+- As is obvious from the implementations `Mixins` and `MixinsWith`, the JS side of mixins is trivial.
+- The magic happens on the TS side, and sometimes you might need to use the TS tools specifically.
+
+### Simple TS helpers
+
+```typescript
+
+// Array tools.
+/** Check if a tuple contains the given value type. */
+export type IncludesValue<Arr extends any[], Val extends any> = { [Key in keyof Arr]: Arr[Key] extends Val ? true : false }[number] extends false ? false : true;
+
+// Iterators.
+/** Iterate down from 20 to 0. If iterates at 0 returns never. If higher than 20, returns 0. (With negative or other invalid returns all numeric options type.)
+ * - When used, should not input negative, but go down from, say, `Arr["length"]`, and stop after 0.
+ */
+export type IterateBackwards = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...0[]];
+/** Iterate up from 0 to 20. If iterates at 20 or higher returns never. (With negative or other invalid returns all numeric options type.)
+ * - When used, should not input negative, but go up from 0 until `Arr["length"]`.
+ */
+export type IterateForwards = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...never[]];
+
+// Class tools.
+/** Get the type for class constructor arguments. */
+export type GetConstructorArgs<T> = T extends new (...args: infer U) => any ? U : never;
+/** Get the type for class constructor return. */
+export type GetConstructorReturn<T> = T extends new (...args: any[]) => infer U ? U : never;
+/** Get the type for class from class instance - the opposite of `InstanceType`. Optionally define constructor args. */
+export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
+
+```
+
+### Mixin TS helpers: AsClass
+
+```typescript
+
+// - Arguments - //
+
+export type AsClass<
+    Class, // Should refer to the type of the merged class type. For fluency type is any.
+    Instance, // Should refer to the type of the merged class instance.
+    // Optional. Can be used to define type constructor arguments for the resulting class.
+    ConstructorArgs extends any[] = any[]
+> = new (...args: ConstructorArgs): Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; };
+
+
+// - Example - //
+
+// Declare type.
+type MyClassType = AsClass<{ SOMETHING_STATIC: number; }, { instanced: boolean; }, [one: number, two?: boolean]>;
+
+// Fake a class and instance on JS side.
+const MyClass = class MyClass { } as unknown as MyClassType;
+const myClass = new MyClass(5); // Constructor requires: [one: number, two?: boolean]
+
+// Do some funky tests.
+MyClass.SOMETHING_STATIC; // number
+myClass.instanced; // boolean
+myClass.constructor.SOMETHING_STATIC; // number
+const mySubClass = new myClass.constructor(0, true);
+mySubClass.instanced // boolean;
+mySubClass.constructor.SOMETHING_STATIC; // number;
+
+```
+
+### Mixin TS helpers: AsMixin
+
+```typescript
+
+// - Arguments - //
+
+export type AsMixin<
+    // Just the instance type of the mixin class.
+    // .. If reading from the mixin func: `InstanceType<ReturnType<typeof addMyMixin>>`
+    // .. But most often more like: `MyMixin<SomeInfo>`, where MyMixin is interface (and class).
+    MixinInstance extends Object
+> = <TBase extends ClassType>(Base: TBase) =>
+    Omit<TBase, "new"> & { new (...args: GetConstructorArgs<MixinInstance["constructor"]>): GetConstructorReturn<TBase> & MixinInstance; };
+
+
+// - Example - //
+
+// Let's first examine a simple mixin with generic params.
+// .. It works fine, until things become more complex: you get problems with excessive deepness of types.
+const addMyMixin_Simple = <Info = {}>(Base: Base) => class MyMixin extends Base {
+    feedInfo(info: Info): void {}
+}
+
+// To provide a mixin base without problems of deepness we can do the following.
+// .. Let's explicitly type what addMyMixin returns to help typescript.
+interface MyMixin<Info = {}> { feedInfo(info: Info): void; }
+function addMyMixin<Info = {}, BaseClass extends ClassType = ClassType>(Base: BaseClass): ClassType<MyMixin<Info>> {
+    return class MyMixin extends Base {
+        feedInfo(info: Info): void {}
+    }
+}
+
+// The annoyance with above is that we lose automated typing of the BaseClass.
+// .. AsMixin simply provides a way to automate the typing of the base class.
+type MyInfo = { something: boolean; };
+class MyMix1 extends addMyMixin<MyInfo, typeof MyBase>(MyBase) { } // Needs to specify the base type explicitly here.
+class MyMix2 extends (addMyMixin as AsMixin<MyMixin<MyInfo>>)(MyBase) { } // Get MyBase type dynamically.
+
+```
+
+### Mixin TS helpers: EvaluateMixinChain
+
+```typescript
+
+// - Arguments - //
+
+export type EvaluateMixinChain<
+    Mixins extends Array<any>,
+    // Optional. Can be used to define type of the base class.
+    BaseClass extends ClassType = ClassType
+> = UnknownComplexProcess;
+
+
+// - Example - //
+
+// Create mixins.
+const addMixin1 = <Info = {}>(Base: ClassType) => class Mixin1 extends Base {
+    testMe(testInfo: Info): void {}
+}
+const addMixin2 = <Info = {}>(Base: ReturnType<typeof addMixin1<Info>>) =>
+    class Mixin2 extends Base { }
+
+// Create shortcuts for our tests below.
+type MyInfo = { test: boolean; };
+type Mixin1 = typeof addMixin1<MyInfo>;
+type Mixin2 = typeof addMixin2<MyInfo>;
+
+// Do some tests.
+type EvalMixins1 = EvaluateMixinChain<[Mixin1]>; // [typeof addMixin1<MyInfo>]
+type EvalMixins2 = EvaluateMixinChain<[Mixin2]>; // [never]
+type EvalMixins3 = EvaluateMixinChain<[Mixin1, Mixin2]>; // [typeof addMixin1<MyInfo>, typeof addMixin2<MyInfo>]
+type EvalMixins4 = EvaluateMixinChain<[Mixin2, Mixin1]>; // [never, typeof addMixin1<MyInfo>]
+type IsChain3Invalid = IncludesValue<EvalMixins3, never>; // false
+type IsChain4Invalid = IncludesValue<EvalMixins4, never>; // true
+
+// Funkier tests.
+type EvalMixins5 = EvaluateMixinChain<[Mixin1, Mixin2, "string"]>; // [..., never]
+type EvalMixins6 = EvaluateMixinChain<[Mixin1, Mixin2, () => {}]>; // [..., never]
+type EvalMixins7 = EvaluateMixinChain<[Mixin1, Mixin2, (Base: ClassType) => ClassType ]>; // All ok.
+
+
+```
+
+### Mixin TS helpers: `MergeMixins<Mixins, ConstructorArgs?, Class?, Instance?>`
+- Intersect mixins to a new clean class. The core method for the variants.
+- Note that if the mixins contain dependencies of other mixins, should type the dependencies fully to avoid unknown. See below.
+
+```typescript
+
+// - Arguments - //
+
+type MergeMixins<
+    Mixins extends Array<(Base: ClassType) => ClassType>,
+    // Optional. Define ConstructorArgs, defaults to the args of the _last mixin_.
+    ConstructorArgs extends any[] = UnknownProcessToGetLastMixinArgs,
+    // Optional. Can be used to define the type of the Base class.
+    Class extends Object = {},
+    Instance extends Object = {},
+> = UnknownComplexProcess;
+
+
+// - Example - //
+
+// Create mixins.
+const addMixin1 = <Info = {}>(Base: ClassType) => class Mixin1 extends Base {
+    testMe(testInfo: Info): void {}
+}
+const addMixin2 = <Info = {}>(Base: ReturnType<typeof addMixin1<Info>>) => class Mixin2 extends Base {
+    static STATIC_ONE = 1;
+}
+const addMixin3 = (Base: ClassType) => class Mixin3 extends Base {
+    name: string = "";
+}
+
+// Merge the types manually.
+type MyInfo = { test: boolean; };
+type Mixins = [typeof addMixin1<MyInfo>, typeof addMixin2<MyInfo>, typeof addMixin3]; // Pass the MyInfo to all that need it.
+type MergedClassType = MergeMixins<Mixins>;
+
+// Extra. MergeMixins does not evaluate the chain. Do it with EvaluateMixinChain.
+type IsChainInvalid = IncludesValue<EvaluateMixinChain<Mixins>, never>; // false
+type IsChainInvalidNow = IncludesValue<EvaluateMixinChain<[Mixins[1], Mixins[0], Mixins[2]]>, never>; // true
+
+// Fake a class.
+const MergedClass = class MergedClass { } as unknown as MergedClassType;
+const mergedClass = new MergedClass();
+
+// Do funky tests.
+mergedClass.testMe({ test: false });
+mergedClass.testMe({ test: 5 }); // Fails - "test" is red-underlined. It's `unknown` if MyInfo only passed to addMixin1 or addMixin2, not both.
+mergedClass.constructor.STATIC_ONE; // number
+mergedClass.name = "Mergy";
+
+```
+
+### Mixin TS helpers: `MixinsInstance<Mixins, ConstructorArgs?>`
+- Uses MergeMixins (see its notes) but returns the instance type. Useful for creating a class interface.
+
+```typescript
+
+// - Arguments - //
+
+export type MixinsInstance<
+    Mixins extends Array<(Base: ClassType) => ClassType>,
+    // Optional. Define ConstructorArgs, defaults to the args of the _last mixin_.
+    ConstructorArgs extends any[] = UnknownProcessToGetLastMixinArgs
+> = InstanceType<MergeMixins<Mixins, ConstructorArgs>>;
+
+
+// - Example - //
+
+// 0. Create a mixin.
+const addMixin1 = <Info = {}>(Base: ClassType) => class Mixin1 extends Base {
+    num: number = 5;
+    testMe(testInfo: Info): void {}
+}
+// .. Optionally collect mixins to a shortcut.
+type MyMixins = [typeof addMixin1<Info>];
+
+// 1. Create a mixed class.
+class MyClass<Info extends Record<string, any> = {}> extends (Mixins(addMixin1) as ClassType) {
+    myMethod(key: keyof Info & string): number {
+        return this.num; // `num` is a recognized class member.
+    }
+}
+
+// 2. Create a matching interface extending what we actually want to extend.
+interface MyClass<Info extends Record<string, any> = {}> extends MixinsInstance<MyMixins> { }
+
+// Test.
+type MyInfo = { something: boolean; };
+const myClass = new MyClass<MyInfo>();
+myClass.testMe({ something: false }); // Requires `MyInfo`.
+const value = myClass.myMethod("something"); // Requires `keyof MyInfo & string`. Returns `number`.
+myClass.num === value; // The type is `boolean`, and outcome `true` on JS side.
+
+
+```
+
+### Mixin TS helpers: `MergeMixinsWith<BaseClass, Mixins, ConstructorArgs?>`
+- Exactly like MergeMixins (see its notes) but allows to input the class type of the base class for the mixin chain.
+
+```typescript
+
+// - Arguments - //
+
+export type MergeMixinsWith<
+    BaseClass extends ClassType,
+    Mixins extends Array<(Base: ClassType) => ClassType>,
+    // Optional. Define ConstructorArgs, defaults to the args of the _last mixin_.
+    ConstructorArgs extends any[] = UnknownProcessToGetLastMixinArgs
+> = MergeMixins<Mixins, ConstructorArgs, BaseClass, InstanceType<BaseClass>>;
+
+
+// - Example - //
+
+class MyBaseClass { }
+type MyBaseMix = MergeMixinsWith<typeof MyBaseClass, MyMixinsArray>;
+
+```
+
+### Mixin TS helpers: `MixinsInstanceWith<BaseClass, Mixins>`
+- Exactly like MergeMixinsWith (see its notes) but returns the instance type. Useful for creating a class interface.
+
+```typescript
+
+// - Arguments - //
+
+export type MixinsInstanceWith<
+    BaseClass extends ClassType,
+    Mixins extends Array<(Base: ClassType) => ClassType>
+> = InstanceType<MergeMixins<Mixins, BaseClass, InstanceType<BaseClass>>>;
+
+
+// - Example - //
+
+// 0. Create a base class and a mixin.
+class MyBase<Info = {}> {
+    static STATIC_ONE = 1;
+    testInfo(info: Info): void {}
+}
+const addMixin1 = (Base: ClassType) => class Mixin1 extends Base {
+    someMember: number = 5;
+}
+
+// 1. Create a mixed class.
+class MyClass<Info extends Record<string, any> = {}> extends (MixinsWith(MyBase, addMixin1) as ClassType) {
+    myMethod(key: keyof Info & string): number {
+        return this.someMember; // `someMember` is a recognized class member.
+    }
+}
+
+// 2. Create a matching interface extending what we actually want to extend.
+interface MyClass<Info extends Record<string, any> = {}>
+    extends MixinsInstanceWith<typeof MyBase<Info>, [typeof addMixin1]> { }
+
+// Test the result, and prove the claim in step 2.
+type MyInfo = { something: boolean; };
+const myClass = new MyClass<MyInfo>();
+const value = myClass.myMethod("something"); // Requires `keyof MyInfo & string`. Returns `number`.
+myClass.testInfo({ something: true });// Requires `MyInfo`.
+myClass.someMember = 3; // Requires `number`.
+myClass.constructor.STATIC_ONE; // number
+
+```
+
+---
+
+## 8. SHORTCUT - 2 TYPES TO SOLVE IT ALL
 - In practice, you often might just need two very simple types from the library: `ClassType` and `AsClass`.
 - In case they are all you need, you might just as well copy them to your types, as they are very simple.
 
