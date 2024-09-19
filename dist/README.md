@@ -394,9 +394,8 @@ myMix.constructor.DEFAULT_TIMEOUT; // number | null
 - At the conceptual level, the constructor args of the mix should be defined for each mix explicitly.
     * This can be done either directly to a mix (with `MergeMixins` or `AsClass`) or by extending the mix with a class and use its constructor.
     * It's then the responsibility of the sequence composer to make sure the flow makes sense and that constructor args flow as expected.
-    * And it's the responsibility of individual mixins 1. to keep constuctor args clean, and 2. to always pass unknown args further.
-        - So essentially: `constructor(myStuff: Stuff, ...args: any[]) { super(...args); }`.
-        - However TS wants `(...args: any[])`, since:  _A mixin class must have a constructor with a single rest parameter of type 'any[]'._
+    * And likewise each mixin should 1. keep constructor args clean, and 2. always pass unknown args further: `constructor(myStuff: Stuff, ...args: any[]) { super(...args); }`.
+        - Well, actually TS wants `(...args: any[])`, since:  _A mixin class must have a constructor with a single rest parameter of type 'any[]'._
         - But we can work around it by a simple trick of `extends (Base as ClassType)` - see below.
 
 ### 5.2. Why cannot the arguments be automated?
