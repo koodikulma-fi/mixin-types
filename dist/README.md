@@ -12,7 +12,7 @@ The documentation below explains how to set up and use mixins in various circums
 4. Complex mixins and generic parameters
 5. Constructor arguments
 6. Using `instanceof`
-7. Shortcut (2 types to solve it all)
+7. Shortcut - 2 types to solve it all
 
 ---
 
@@ -485,20 +485,20 @@ myMonster.settings; // any
 
 ---
 
-## 7. SHORTCUT (2 TYPES TO SOLVE IT ALL)
+## 7. SHORTCUT - 2 TYPES TO SOLVE IT ALL
 - In practice, you often might just need two very simple types from the library: `ClassType` and `AsClass`.
 - In case they are all you need, you might just as well copy them to your types, as they are very simple.
 
 ```typescript
 
-/** Get the type for class from class instance - the opposite of `InstanceType`. Optionally define constructor args. */
+/** Get class type from class instance type with optional constr. args. The opposite of `InstanceType`. */
 export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
 
 /** Re-type class.
  * Parameters and return:
- * @param Class Should refer to the type of the merged class type. For fluency it's not required that it's a ClassType (the "new" part will be omitted anyhow).
- * @param Instance Should refer to the type of the merged class instance.
- * @param ConstructorArgs Should refer to the constructor arguments of the new class (= the last mixin in the chain). Defaults to any[].
+ * @param Class Type of the merged class type. (Optionally extends ClassType.)
+ * @param Instance Type of the merged class instance. (Optionally extends Object.)
+ * @param ConstructorArgs Constructor arguments of the new class. Defaults to any[].
  * @returns The returned type is a new class type, with recursive class <-> instance support.
  */
 export type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Class, "new"> & {
