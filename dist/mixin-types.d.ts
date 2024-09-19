@@ -291,9 +291,9 @@ type GetConstructorReturn<T> = T extends new (...args: any[]) => infer U ? U : n
  *
  * ```
  * Parameters and return:
- * @param Class Should refer to the type of the merged class type. For fluency it's not required that it's a ClassType (the "new" part will be omitted anyhow).
- * @param Instance Should refer to the type of the merged class instance.
- * @param ConstructorArgs Should refer to the constructor arguments of the new class (= the last mixin in the chain). Defaults to any[].
+ * @param Class Type of the merged class type. (Should extend ClassType, not required for fluency.)
+ * @param Instance Type of the merged class instance. (Should extend Object, not required for fluency.)
+ * @param ConstructorArgs Constructor arguments of the new class. Defaults to any[].
  * @returns The returned type is a new class type, with recursive class <-> instance support.
  */
 type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Class, "new"> & {
