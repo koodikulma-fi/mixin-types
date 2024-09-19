@@ -385,7 +385,7 @@ myMix.constructor.DEFAULT_TIMEOUT; // number | null
 ### Rules of thumb
 - Generally speaking, you should prefer _not_ using constructor arguments in mixins.
     * When needed, keep them simple, and use fixed number of arguments (eg. not 1-3 args, but eg. 2).
-    * Note also that it's not possible to automate how constructor arguments map out (see case further below).
+    * Note also that it's not possible to automate typing for constructor arguments (see the code example below).
     * As it's always the _last mixin / extending class_ that defines the args - and as such, should do it explicitly.
 - At the conceptual level, the constructor args of the mix should be defined for each mix explicitly.
     * This can be done either directly to a mix (with `MergeMixins` or `AsClass`) or by extending the mix with a class and use its constructor.
@@ -396,7 +396,7 @@ myMix.constructor.DEFAULT_TIMEOUT; // number | null
 - The simple answer is that it's _not known how mixins use the constructor args_.
 - The below example demonstrations this point while showcasing how to use constructor arguments.
 
-### In code
+### Using constructor args
 
 ```typescript
 
@@ -479,6 +479,6 @@ myMonster.settings; // any
             * Likewise classes would add them on the static side: `static CLASS_NAMES = [...MyBaseClass.CLASS_NAMES, "MyClass"]`.
         - Finally, you'd have a custom function for checking inheritance:
             * `isInstanceOf(Class: BaseClassType, className: string): boolean { return Class.CLASS_NAMES.includes(className); }`.
-- It's also worth noting that the big architectural choices at the conceptual level have reverberations all the way down to these details.
+- It's also worth noting that the larger architectural choices at the conceptual level have reverberations all the way down to these details.
     * For example, questions about using a complex tree of classes with inheritance vs. using a modular structure.
     * In a tree of classes you might use mixins as base building blocks (nor part of the tree), whereas in a more modular structure you wouldn't really use mixins at all for the modules (or again, as base building blocks for modules). This is because, mixins are essentially an alternative (or an implementation) of modularity, although tied to class inheritance: you just pick your modules, like you pick your mixins.
