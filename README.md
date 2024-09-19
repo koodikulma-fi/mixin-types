@@ -12,8 +12,8 @@ The documentation below explains how to set up and use mixins in various circums
 4. [Complex mixins and generic parameters](#4-complex-mixins-and-generic-parameters)
 5. [Constructor arguments](#5-constructor-arguments)
 6. [Using `instanceof`](#6-using-instanceof-with-mixins)
-7. [JS implementations](#7-js-implementations)
-8. [TS tools](#8-ts-tools)
+7. [JavaScript implementations](#7-javascript-implementations)
+8. [TypeScript tools](#8-typescript-tools)
 9. [Shortcut - 2 types to solve it all](#8-shortcut---2-types-to-solve-it-all)
 
 ---
@@ -487,7 +487,7 @@ myMonster.settings; // any
 
 ---
 
-## 7. JS implementations
+## 7. JAVASCRIPT IMPLEMENTATIONS
 
 - For usage, see [simple mixins](#2-simple-mixins) and [passing generic params](#3-passing-generic-parameters-simple-cases) above.
 
@@ -517,7 +517,7 @@ export function MixinsWith(Base, ...mixins) {
 
 ---
 
-## 8. TS TOOLS
+## 8. TYPESCRIPT TOOLS
 
 - As is obvious from the implementations `Mixins` and `MixinsWith`, the JS side of mixins is trivial.
 - The magic happens on the TS side, and sometimes you might need to use the TS tools specifically.
