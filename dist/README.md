@@ -8,12 +8,13 @@ The npm package can be found with: [mixin-types](https://www.npmjs.com/package/m
 The documentation below explains how to set up and use mixins in various circumstances.
 1. [General guidelines](#1-general-guidelines)
 2. [Simple mixins](#2-simple-mixins)
-3. [Passing generic params from class (to simple mixins)](#3-passing-generic-parameters-from-class-to-simple-mixins)
+3. [Passing generic params (simple cases)](#3-passing-generic-parameters-simple-cases)
 4. [Complex mixins and generic parameters](#4-complex-mixins-and-generic-parameters)
 5. [Constructor arguments](#5-constructor-arguments)
 6. [Using `instanceof`](#6-using-instanceof-with-mixins)
-7. [Typing tools](#7-typing-tools)
-8. [Shortcut - 2 types to solve it all](#8-shortcut---2-types-to-solve-it-all)
+7. [JS implementations](#7-js-implementations)
+8. [TS tools](#8-ts-tools)
+9. [Shortcut - 2 types to solve it all](#8-shortcut---2-types-to-solve-it-all)
 
 ---
 
@@ -124,7 +125,7 @@ class MyManualMix extends addMixin3<MyInfo>(addMixin2<MyInfo>(addMixin1(MyBase<M
 
 ```
 
-## 3. PASSING GENERIC PARAMETERS FROM CLASS (TO SIMPLE MIXINS)
+## 3. PASSING GENERIC PARAMETERS (simple cases)
 - To pass in generic parameters from a class, there's an inherent problem: _Base class expressions cannot reference class type parameters_.
 - This problem can be overcome using the trick of declaring a matching `interface` for the new `class`.
 
@@ -486,12 +487,42 @@ myMonster.settings; // any
 
 ---
 
-## 7. TYPING TOOLS
+## 7. JS implementations
+
+- For usage, see [simple mixins](#2-simple-mixins) and [passing generic params](#3-passing-generic-parameters-simple-cases) above.
+
+### 7.1. `Mixins`
+
+```typescript
+
+// On the JS side, the feature is implemented like this.
+// .. Usage: `class MyClass extends Mixins(addMixin1, addMixin2) { }`.
+export function Mixins(...mixins) {
+    return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Object);
+}
+
+```
+
+### 7.2. `MixinsWith`
+
+```typescript
+
+// On the JS side, the feature is implemented like this.
+// .. Usage: `class MyClass extends MixinsWith(BaseClass, addMixin1, addMixin2) { }`.
+export function MixinsWith(Base, ...mixins) {
+    return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Base);
+}
+
+```
+
+---
+
+## 8. TS TOOLS
 
 - As is obvious from the implementations `Mixins` and `MixinsWith`, the JS side of mixins is trivial.
 - The magic happens on the TS side, and sometimes you might need to use the TS tools specifically.
 
-### 7.1. Simple TS helpers
+### 8.1. Simple TS helpers
 
 ```typescript
 
@@ -519,7 +550,7 @@ export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) 
 
 ```
 
-### 7.2. Mixin TS helpers: AsClass
+### 8.2. Mixin TS helpers: AsClass
 
 ```typescript
 
@@ -552,7 +583,7 @@ mySubClass.constructor.SOMETHING_STATIC; // number;
 
 ```
 
-### 7.3. Mixin TS helpers: AsMixin
+### 8.3. Mixin TS helpers: AsMixin
 
 ```typescript
 
@@ -592,7 +623,7 @@ class MyMix2 extends (addMyMixin as AsMixin<MyMixin<MyInfo>>)(MyBase) { } // Get
 
 ```
 
-### 7.4. Mixin TS helpers: EvaluateMixinChain
+### 8.4. Mixin TS helpers: EvaluateMixinChain
 
 ```typescript
 
@@ -635,7 +666,7 @@ type EvalMixins7 = EvaluateMixinChain<[Mixin1, Mixin2, (Base: ClassType) => Clas
 
 ```
 
-### 7.5. Mixin TS helpers: `MergeMixins<Mixins, ConstructorArgs?, Class?, Instance?>`
+### 8.5. Mixin TS helpers: `MergeMixins<Mixins, ConstructorArgs?, Class?, Instance?>`
 - Intersect mixins to a new clean class. The core method for the variants.
 - Note that if the mixins contain dependencies of other mixins, should type the dependencies fully to avoid unknown. See below.
 
@@ -753,7 +784,7 @@ type MyBaseMix = MergeMixinsWith<typeof MyBaseClass, MyMixinsArray>;
 
 ```
 
-### 7.6. Mixin TS helpers: `MixinsInstanceWith<BaseClass, Mixins>`
+### 8.6. Mixin TS helpers: `MixinsInstanceWith<BaseClass, Mixins>`
 - Exactly like MergeMixinsWith (see its notes) but returns the instance type. Useful for creating a class interface.
 
 ```typescript
@@ -800,7 +831,7 @@ myClass.constructor.STATIC_ONE; // number
 
 ---
 
-## 8. SHORTCUT - 2 TYPES TO SOLVE IT ALL
+## 9. SHORTCUT - 2 TYPES TO SOLVE IT ALL
 - In practice, you often might just need two very simple types from the library: `ClassType` and `AsClass`.
 - In case they are all you need, you might just as well copy them to your types, as they are very simple.
 
