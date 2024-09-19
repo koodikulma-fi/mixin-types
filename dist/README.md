@@ -468,12 +468,12 @@ myMonster.settings; // any
 
 ## 6. USING `instanceof` WITH MIXINS
 - Why it won't "work" the way you might initially expect.
-    * As each sequence of mixins produces a unique class, you cannot use `instanceof` to check for existence of mixin base classes.
-    * In fact, you don't even have any reference to them (unless you made a separate class in addition to the mixin).
+    * As each mixin sequence produces a unique class, you cannot check mixin base classes using `instanceof`.
+    * In fact, you don't even have a reference to them (unless you have a separate class prepared).
     * This is a core limitation of mixins when implemented as extensions to native classes.
 - Examples of working around.
-    1. Conceptually, use mixins as building blocks to compose your "main classes" and use `instanceof` only for them.
-    2. Manual implementation.
+    * 1. Conceptually, use mixins as building blocks to compose the "main classes" and use `instanceof` for them.
+    * 2. Manual implementation.
         - Add `static CLASS_NAMES: string[]` member that is required for all mixins (and classes) in your system. Let's call it `BaseClassType`.
         - Each time a mixin extends a class, it should add to its CLASS_NAMES its unique mixin (class) name.
             * Likewise classes would add them on the static side: `static CLASS_NAMES = [...MyBaseClass.CLASS_NAMES, "MyClass"]`.
@@ -481,4 +481,5 @@ myMonster.settings; // any
             * `isInstanceOf(Class: BaseClassType, className: string): boolean { return Class.CLASS_NAMES.includes(className); }`.
 - It's also worth noting that the larger architectural choices at the conceptual level have reverberations all the way down to these details.
     * For example, questions about using a complex tree of classes with inheritance vs. using a modular structure.
-    * In a tree of classes you might use mixins as base building blocks (nor part of the tree), whereas in a more modular structure you wouldn't really use mixins at all for the modules (or again, as base building blocks for modules). This is because, mixins are essentially an alternative (or an implementation) of modularity, although tied to class inheritance: you just pick your modules, like you pick your mixins.
+    * In a tree of classes you might use mixins as base building blocks (nor part of the tree), whereas in a more modular structure you wouldn't really use mixins at all for the modules (or again, as base building blocks for modules). This is because, mixins are essentially an alternative (or an implementation) of modularity, although tied to class inheritance: anyway, you just pick your modules, like you pick your mixins.
+    * The point here is that, if you have a complex class tree structure, mixing in mixins is not necessarily going to solve the problems, but merely shift their form. That is, you get a new domain of tiny little problems here and there by introducing mixings to a clean class inheritance tree.
