@@ -12,6 +12,7 @@ The documentation below explains how to set up and use mixins in various circums
 4. Complex mixins and generic parameters
 5. Constructor arguments
 6. Using `instanceof`
+7. Shortcut (2 types to solve it all)
 
 ---
 
@@ -481,3 +482,29 @@ myMonster.settings; // any
     * For example, questions about using a complex tree of classes with inheritance vs. using a modular structure.
     * In a tree of classes you might use mixins as base building blocks (nor part of the tree), whereas in a more modular structure you wouldn't really use mixins at all for the modules (or again, as base building blocks for modules). This is because, mixins are essentially an alternative (or an implementation) of modularity, although tied to class inheritance: anyway, you just pick your modules, like you pick your mixins.
     * The point here is that, if you have a complex class tree structure, mixing in mixins is not necessarily going to solve the problems, but merely shift their form. That is, you get a new domain of tiny little problems here and there by introducing mixings to a clean class inheritance tree.
+
+---
+
+## 7. SHORTCUT (2 TYPES TO SOLVE IT ALL)
+- In practice, you often might just need two very simple types from the library.
+- These two types are: `ClassType` and `AsClass`.
+- As they are very simple and if that's all that's needed, you might alternatively just copy them to your types.
+
+```typescript
+
+/** Get the type for class from class instance - the opposite of `InstanceType`. Optionally define constructor args. */
+export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
+
+/** Re-type class.
+ * Parameters and return:
+ * @param Class Should refer to the type of the merged class type. For fluency it's not required that it's a ClassType (the "new" part will be omitted anyhow).
+ * @param Instance Should refer to the type of the merged class instance.
+ * @param ConstructorArgs Should refer to the constructor arguments of the new class (= the last mixin in the chain). Defaults to [].
+ * @returns The returned type is a new class type, with recursive class <-> instance support.
+ */
+export type AsClass<Class, Instance, ConstructorArgs extends any[] = []> = Omit<Class, "new"> & {
+    // The ["constructor"] part is optional, but provides a typed link to the static side and back recursively.
+    new (...args: ConstructorArgs): Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; };
+};
+
+```
