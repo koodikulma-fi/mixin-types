@@ -1,11 +1,12 @@
 {
   "name": "mixin-types",
   "version": "1.0.0",
-  "description": "Two simple JS functions (Mixins and MixinsWith) to handle mixins, and related TS tools supporting easy generic typing.",
+  "description": "A tiny library providing typing tools for mixin classes and 2 simple JS funcs mixins (Mixins and MixinsWith).",
   "keywords": [
-    "EasyMix",
     "mixin-types",
     "mixin",
+    "types",
+    "typing",
     "class",
     "mixins",
     "classes",

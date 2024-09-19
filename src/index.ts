@@ -19,7 +19,7 @@
  * 
  * // Create mixins.
  * const addMixin1 = <Info = {}>(Base: ClassType) => class Mixin1 extends Base { num: number = 5; testMe(testInfo: Info): void {} }
- * const addMixin2 = (Base: ClassType) => class Mixin2 extends Base { name: string; }
+ * const addMixin2 = (Base: ClassType) => class Mixin2 extends Base { name: string = ""; }
  * const addMixin3 = <Info = {}>(Base: ReturnType<typeof addMixin1<Info>>) => class Mixin3 extends Base { }
  * 
  * // Create a mixed class.

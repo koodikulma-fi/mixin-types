@@ -1,7 +1,7 @@
 
 ## WHAT
 
-`mixin-types` is a tiny library providing typing tools for mixins and two simple JS functions (`Mixins` and `MixinsWith`).
+`mixin-types` is a tiny library providing typing tools for mixin classes and 2 simple JS funcs (`Mixins` and `MixinsWith`).
 
 The npm package can be found with: [mixin-types](https://www.npmjs.com/package/mixin-types). Contribute in GitHub: [koodikulma-fi/mixin-types.git](https://github.com/koodikulma-fi/mixin-types.git)
 
@@ -42,7 +42,7 @@ const addMixin1 = <Info = {}>(Base: ClassType) => class Mixin1 extends Base {
     testMe(testInfo: Info): void {}
 }
 const addMixin2 = (Base: ClassType) => class Mixin2 extends Base {
-    name: string;
+    name: string = "";
 }
 const addMixin3 = <Info = {}>(Base: ReturnType<typeof addMixin1<Info>>) => class Mixin3 extends Base { }
 
