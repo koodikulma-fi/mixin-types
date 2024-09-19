@@ -27,7 +27,7 @@ The documentation below explains how to set up and use mixins in various circums
 
 ## 2. SIMPLE MIXINS
 
-- For sequencing simple mixins, use the `Mixins` and `MixinsWith` methods.
+- For sequencing many mixins together, use the `Mixins` and `MixinsWith` methods.
 
 ### Using `Mixins` (for a sequence of mixins)
 
