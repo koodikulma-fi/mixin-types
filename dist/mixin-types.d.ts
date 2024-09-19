@@ -84,7 +84,7 @@
  *
  * // 1. Firstly, to (prepare to) avoid circularity use private + public mixin.
  * // .. The private mixin is the core mixin, but it has no generic typing at all, and returns ClassType.
- * const _addSignalBoy = (Base: ClassType) => class SignalBoy extends Base {
+ * const _addSignalBoy = (Base: ClassType): ClassType => class SignalBoy extends Base {
  *     public signals: Record<string, Array<(...args: any[]) => void>> = {};
  *     public listenTo(signalName: string, ...signalArgs: any[]): void { } // Put code inside.
  *     public sendSignal(name: string, ...args: any[]): void { } // Put code inside.
@@ -208,7 +208,7 @@ declare function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(..
  *
  * // 1. Firstly, to (prepare to) avoid circularity use private + public mixin.
  * // .. The private mixin is the core mixin, but it has no generic typing at all, and returns ClassType.
- * const _addBaseBoy = (Base: typeof MyBase) => class BaseBoy extends Base {
+ * const _addBaseBoy = (Base: typeof MyBase): ClassType => class BaseBoy extends Base {
  *     public testBase(baseName: string): boolean { return this.name.startsWith(baseName); }
  * }
  * // .. The public mixin takes in type args, and defines a typed return.

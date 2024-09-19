@@ -383,10 +383,10 @@ myMix.constructor.DEFAULT_TIMEOUT; // number | null
 - When you use them, keep them very simple, preferably just taking 1 argument - definitely not say, 1-3 arguments.
 - There's also inherentely insolvable cases for trying to automate how constructor arguments map out.
     * The simple answer is that the last mixin in the chain defines the arguments, and it's true (mostly).
-    * Even though it's blindly passing on args: `constructor(myStuff: Stuff, ...args: any[]) { super(...args); }`.
+    * Even though it's passing on args: `constructor(myStuff: Stuff, ...args: any[]) { super(...args); }`.
     * However it is actually impossible to know the ...args for sure (see case below) at the internal level.
 - To solve it all:
-    * At the conceptual level, the constructor arguments of the mixed sequence should be defined for each mix explicitly.
+    * At the conceptual level, the constructor args of the mix should be defined for each mix explicitly.
         - This can be done either directly to a mix (with MergeMixins or AsClass) or by extending the mix with a class and use its constructor.
     * It's then the responsibility of the mixing master to make sure the sequence makes sense and that the constructor args flow as expected.
         - And it's the responsibility of individual mixins to keep constuctor args simple and clean, and to expect unknown arguments to be passed further: `constructor(myStuff: Stuff, ...args: any[]) { super(...args); }`.
@@ -402,9 +402,17 @@ myMix.constructor.DEFAULT_TIMEOUT; // number | null
 
 ## 6. USING `instanceof` WITH MIXINS
 - Why it won't "work" the way you might initially expect.
+    * As each sequence of mixins produces a unique class, you cannot use `instanceof` to check for existence of mixin base classes.
+    * In fact, you don't even have any reference to them (unless you made a separate class in addition to the mixin).
+    * This is a core limitation of mixins when implemented as extensions to native classes.
 - Examples of working around.
-    1. Conceptually, use mixins as tiny building blocks to compose your "main classes" and use instanceof only for them.
+    1. Conceptually, use mixins as building blocks to compose your "main classes" and use `instanceof` only for them.
     2. Manual implementation.
-        - Add static INHERITED_CLASS_NAMES_: string[] member. It's the required basis for all.
-        - Each time a mixin extends a class, it should add to its INHERITED_CLASS_NAMES its unique mixin (class) name.
-        - Finally, you'd have a custom `isInstanceOf(Class: ClassType, className: string): boolean` method that simply checks the string array for a match.
+        - Add `static CLASS_NAMES: string[]` member that is required for all mixins (and classes) in your system. Let's call it `BaseClassType`.
+        - Each time a mixin extends a class, it should add to its CLASS_NAMES its unique mixin (class) name.
+            * Likewise classes would add them on the static side: `static CLASS_NAMES = [...MyBaseClass.CLASS_NAMES, "MyClass"]`.
+        - Finally, you'd have a custom function for checking inheritance:
+            * `isInstanceOf(Class: BaseClassType, className: string): boolean { return Class.CLASS_NAMES.includes(className); }`.
+- It's also worth noting that the big architectural choices at the conceptual level have reverberations all the way down to these details.
+    * For example, questions about using a complex tree of classes with inheritance vs. using a modular structure.
+    * In a tree of classes you might use mixins as base building blocks (nor part of the tree), whereas in a more modular structure you wouldn't really use mixins at all for the modules (or again, as base building blocks for modules). This is because, mixins are essentially an alternative (or an implementation) of modularity, although tied to class inheritance: you just pick your modules, like you pick your mixins.
