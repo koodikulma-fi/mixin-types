@@ -428,6 +428,7 @@ function addDataMan<
         settings: Settings;
         // Note. If we would use `extends (Base as ClassType)`,
         // .. then we could use: `(data: Data, settings: Settings, ...args: any[])`
+        // .. or use opt. args:  `(data?: Data, settings?: Settings, ...args: any[])`
         constructor(...args: any[]) {
             super(...args.slice(2));
             this.data = args[0] || {};
