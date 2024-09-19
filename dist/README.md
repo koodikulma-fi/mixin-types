@@ -522,7 +522,7 @@ export function MixinsWith(Base, ...mixins) {
 
 ## 8. TYPESCRIPT TOOLS
 
-- As is obvious from the implementations `Mixins` and `MixinsWith`, the JS side of mixins is trivial.
+- As is obvious from the implementations of `Mixins` and `MixinsWith`, the JS side of mixins is trivial.
 - The magic happens on the TS side, and sometimes you might need to use the TS tools specifically.
 
 ### 8.1. Simple TS helpers
