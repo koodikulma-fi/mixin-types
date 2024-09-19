@@ -411,6 +411,7 @@ myMix.constructor.DEFAULT_TIMEOUT; // number | null
 // DataMan.
 // .. Let's define interfaces for DataMan with two constructor args (data: Data, settings: Settings).
 interface DataManType<Data = {}, Settings = {}> extends
+    // .. Could even do this: `{} extends Data ? [Data?, Settings?, ...any[]] : [Data, Settings?, ...any[]]`
     ClassType<DataMan<Data, Settings>, [data: Data, settings: Settings, ...args: any[]]> {}
 interface DataMan<Data = {}, Settings = {}> {
     ["constructor"]: DataManType<Data, Settings>; // Link to the static side.
@@ -426,9 +427,9 @@ function addDataMan<
     return class DataMan extends Base {
         data: Data;
         settings: Settings;
-        // Note. If we would use `extends (Base as ClassType)`,
-        // .. then we could use: `(data: Data, settings: Settings, ...args: any[])`
-        // .. or use opt. args:  `(data?: Data, settings?: Settings, ...args: any[])`
+        // Note. If we would use: `extends (Base as ClassType)`,
+        // .. then we could use:  `(data: Data, settings: Settings, ...args: any[])`
+        // .. or use opt. args:   `(data?: Data, settings?: Settings, ...args: any[])`
         constructor(...args: any[]) {
             super(...args.slice(2));
             this.data = args[0] || {};
