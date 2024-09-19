@@ -85,14 +85,14 @@
  * // Internal type.
  * type SignalsRecord = Record<string, (...args: any[]) => void>;
  * 
- * // 1. Firstly, to (prepare to) avoid circularity use private + public mixin.
- * // .. The private mixin is the core mixin, but it has no generic typing at all, and returns ClassType.
+ * // 1. Firstly, to (prepare to) avoid circularity either use private + public mixin or retype as ClassType.
+ * // .. Either way, the core mixin does not (need to) use generic typing at all, and returns `ClassType`.
  * const _addSignalBoy = (Base: ClassType): ClassType => class SignalBoy extends Base {
  *     public signals: Record<string, Array<(...args: any[]) => void>> = {};
  *     public listenTo(signalName: string, ...signalArgs: any[]): void { } // Put code inside.
  *     public sendSignal(name: string, ...args: any[]): void { } // Put code inside.
  * }
- * // .. The public mixin takes in type args, and defines a typed return.
+ * // .. The public mixin takes in type args, and defines a typed return. Problems with deepness solved.
  * export const addSignalBoy = <Signals extends SignalsRecord = {}, BaseClass extends ClassType = ClassType>
  *     (Base: BaseClass): ClassType<SignalBoy<Signals>> & BaseClass => _addSignalBoy(Base) as any;
  * 
@@ -212,35 +212,41 @@ export function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(...
  * // Internal type and MyBase class.
  * class MyBase { public name: string = ""; }
  * 
- * // 1. Firstly, to (prepare to) avoid circularity use private + public mixin.
- * // .. The private mixin is the core mixin, but it has no generic typing at all, and returns ClassType.
- * const _addBaseBoy = (Base: typeof MyBase): ClassType => class BaseBoy extends Base {
- *     public testBase(baseName: string): boolean { return this.name.startsWith(baseName); }
+ * // 1. Firstly, to avoid circularity either use private + public mixin or retype as ClassType.
+ * // .. Let's use a single mixin + retyping in this example. Either way, the core mixin has no generic types.
+ * export function addBaseBoy<
+ *     BaseNames extends string = string,
+ *     BaseClass extends typeof MyBase = typeof MyBase
+ * >(Base: BaseClass): ClassType<BaseBoy<BaseNames>, any[]> & BaseClass {
+ *     // Note that without (Base as typeof MyBase), there's a TS error about mixin constructor args.
+ *     return class BaseBoy extends (Base as typeof MyBase) {
+ *         // Use simple types - put the smart ones into the interface.
+ *         public testBase(baseName: string): boolean {
+ *             return this.name.startsWith(baseName);
+ *         }
+ *     } as any; // We are detached from the outcome on purpose.
  * }
- * // .. The public mixin takes in type args, and defines a typed return.
- * export const addBaseBoy = <BaseNames extends string = string, BaseClass extends typeof MyBase = typeof MyBase>
- *     (Base: BaseClass): ClassType<BaseBoy<BaseNames>> & BaseClass => _addBaseBoy(Base) as any;
  * 
  * // 2. Secondly, define the BaseBoy interface (needed above) explicitly, while the optional class loosely.
- * // .. The class can look like this.
- * export class BaseBoy<BaseNames extends string = string> extends _addBaseBoy(MyBase) { }
+ * // .. Since we chose to use "single mixin + retyping", let's retype now to avoid circularity: `as any as typeof MyBase`.
+ * export class BaseBoy<BaseNames extends string = string> extends (addBaseBoy(MyBase) as any as typeof MyBase) { }
  * // .. The interface must match the class (in name and type args), and holds the explicit typing.
  * export interface BaseBoy<BaseNames extends string = string> extends MyBase {
- *     testBase(baseName: BaseNames): boolean;
+ *    testBase(baseName: BaseNames): boolean;
  * }
  * 
  * // Test.
  * type MyNames = "base" | "ball";
  * class MyCustomBase extends MyBase {
- *     public age: number = 0;
+ *    public age: number = 0;
  * }
  * class MyBaseBoy extends addBaseBoy<MyNames, typeof MyCustomBase>(MyCustomBase) {
- *     test() {
- *         this.age = 10; // Recognized as `number`.
- *         this.name = "base"; // Recognized as `string`. Not typed further, as MyBase not designed to accept args.
- *         this.testBase("ball"); // Returns `false`. Only input options are "base" and "ball".
- *         this.testBase("base"); // Returns `true`. Only input options are "base" and "ball".
- *     }
+ *    test() {
+ *        this.age = 10; // Recognized as `number`.
+ *        this.name = "base"; // Recognized as `string`. Not typed further, as MyBase not designed to accept args.
+ *        this.testBase("ball"); // Returns `false`. Only input options are "base" and "ball".
+ *        this.testBase("base"); // Returns `true`. Only input options are "base" and "ball".
+ *    }
  * }
  * // Alternatively to automate reading type of MyBase.
  * class MyBaseBoy2 extends (addBaseBoy as AsMixin<BaseBoy<MyNames>>)(MyCustomBase) { }

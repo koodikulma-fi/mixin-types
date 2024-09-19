@@ -197,7 +197,7 @@ myClass.constructor.STATIC_ONE; // number
 - However, as things get more complex, you probably run into an issue with excessive deepness of the mixin types.
 - Solutions to overcome this issue easily lead to others. So below is the recommended approach:
     1. Issue with excessive deepness. -> Use explicit typing.
-    2. Issues with circular reference when using explicit typing. -> Use a separate core + exported mixin creator.
+    2. Issues with circular reference when using explicit typing. -> Retype as `ClassType` or use private + public mixin.
     3. Minor issue with losing the type of the base class. -> Can use `typeof MyBase` or `AsMixin` helper.
 
 ### 1. Excessive deepness -> explicit typing
@@ -210,8 +210,12 @@ myClass.constructor.STATIC_ONE; // number
 
 // Some internal typing.
 export type SignalsRecord = Record<string, (...args: any[]) => void>;
+
 // Let's declare SignalBoy class using private untyped `_addSignalBoy(Object?: ClassType) => ClassType` as the basis.
-export class SignalBoy<Signals extends SignalsRecord = {}> extends _addSignalBoy() { } // Extends simple ClassType.
+export class SignalBoy<Signals extends SignalsRecord = {}> extends _addSignalBoy() { }
+// Or alternatively use one mixin but retype with `as any as ClassType`. Not enough with `as ClassType` (circularity).
+// export class SignalBoy<Signals extends SignalsRecord = {}> extends (addSignalBoy() as any as ClassType) { }
+
 // Let's declare the interface with explicit typing.
 export interface SignalBoy<Signals extends SignalsRecord = {}> {
     // Optionally further define the static side, for extra external fluency.
@@ -222,6 +226,7 @@ export interface SignalBoy<Signals extends SignalsRecord = {}> {
     listenTo<Name extends string & keyof Signals>(name: Name, callback: Signals[Name], extraArgs?: any[] | null): void;
     sendSignal<Name extends string & keyof Signals>(name: Name, ...args: Parameters<Signals[Name]>): void;
 }
+
 // Optionally define the non-instanced class type.
 export interface SignalBoyType<Signals extends SignalsRecord = {}> extends ClassType<SignalBoy<Signals>> {
     // Any static members and methods here.
@@ -241,14 +246,10 @@ function addSignalBoy_CIRCULAR<Data = {}, TBase extends ClassType = ClassType>(B
 ```
 
 ### 2. Avoiding circularity using a private and public mixin
-- To avoid the problem with circularity above, let's use a private _addSignalBoy that does not refer to the SignalBoy class/interface.
-    * Note that want to avoid deepness and anyway extend mere `ClassType`: `class SignalBoy extends (_addSignalBoy() as ClassType) {}`.
-    * Accordingly, we can make the _addSignalBoy directly return `ClassType`, to simplify above: `class SignalBoy extends _addSignalBoy {}`.
-- We then export a cleaned up `addSignalBoy<Signals>` for the public use of our mixin.
-- Sidenote. You might be tempted to instead split the _interface_ (not mixin func) into private/public parts.
-    * For example: using `interface _MyMix<Info = {}> { ... }` as the core for MyMix.
-    * This works fine, until you use MyMix outside the file, as addMyMix uses a private / unexported interface.
-    * You could then export it, but it's just confusing: _MyMix and MyMix interfaces are both there and 100% equal.
+- To avoid the problem with circularity there are at least 2 main working approaches.
+    1. Retype the internal use of the mixin: `class SignalBoy extends (addSignalBoy() as any as ClassType) {}`.
+    2. Use a separate private and public mixin. See example below: `class SignalBoy extends _addSignalBoy() {}`.
+    3. DON'T: Use a non-class-linked dummy interface: eg. `interface _SignalBoy {}`. It leads to problem of private/unexported interface.
 
 
 ```typescript
@@ -285,7 +286,7 @@ function _addSignalBoy(Base?: ClassType): ClassType {
 export function addSignalBoy<
     Signals extends SignalsRecord = {},
     BaseClass extends ClassType = ClassType
->(Base: BaseClass): SignalBoyType<Signals> & BaseClass {
+>(Base?: BaseClass): SignalBoyType<Signals> & BaseClass {
     // We just use the same internal JS method.
     return _addSignalBoy(Base) as any;
 }
@@ -297,7 +298,7 @@ export function addSignalBoy<
 export function addSignalBoy_ALT<
     Signals extends SignalsRecord = {},
     BaseClass extends ClassType = ClassType
->(Base: BaseClass): AsClass<
+>(Base?: BaseClass): AsClass<
     // Static.
     SignalBoyType<Signals> & BaseClass,
     // Instanced.
