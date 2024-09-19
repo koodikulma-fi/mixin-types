@@ -245,7 +245,7 @@ function addSignalBoy_CIRCULAR<Data = {}, TBase extends ClassType = ClassType>(B
 
 ```
 
-### 2. Avoiding circularity using a private and public mixin
+### 2. Avoiding circular references
 - To avoid the problem with circularity there are at least 2 main working approaches.
     1. Retype the internal use of the mixin: `class SignalBoy extends (addSignalBoy() as any as ClassType) {}`.
     2. Use a separate private and public mixin. See example below: `class SignalBoy extends _addSignalBoy() {}`.
