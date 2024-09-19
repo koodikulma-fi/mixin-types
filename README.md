@@ -21,7 +21,7 @@ The documentation below explains how to set up and use mixins in various circums
 ## 1. GENERAL GUIDELINES
 - For a clean overall mixin architecture, keep the purpose of each mixin simple and detached from each other.
 - If a mixin is dependent on another mixin, consider _including_ it, instead of _requiring_ it.
-    * For example: `addMyBigMixin = (Base) => return class MyBigMixin extends addMySmallMixin(Base) { ... }`.
+    * For example: `mixinMyBigMixin = (Base) => return class MyBigMixin extends mixinMySmallMixin(Base) { ... }`.
 - Keep constructor arguments clean and minimal (and their count fixed), or preferably don't use them at all.
 - Finally, use mixins as simple base blocks to create your "final" classes. Don't use mixins excessively.
 - That said, mixins can be wonderfully useful and provide an easy way to avoid writing same code many times.
@@ -37,19 +37,19 @@ The documentation below explains how to set up and use mixins in various circums
 ```typescript
 
 // Create mixins.
-const addMixin1 = <Info = {}>(Base: ClassType) => class Mixin1 extends Base {
+const mixinTest1 = <Info = {}>(Base: ClassType) => class Test1 extends Base {
     num: number = 5;
     testMe(testInfo: Info): void {}
 }
-const addMixin2 = (Base: ClassType) => class Mixin2 extends Base {
+const mixinTest2 = (Base: ClassType) => class Test2 extends Base {
     name: string = "";
 }
-const addMixin3 = <Info = {}>(Base: ReturnType<typeof addMixin1<Info>>) => class Mixin3 extends Base { }
+const mixinTest3 = <Info = {}>(Base: ReturnType<typeof mixinTest1<Info>>) => class Test3 extends Base { }
 
 // Create a mixed class.
 // .. Provide MyInfo systematically to all that use it. Otherwise you get `unknown` for the related type.
 type MyInfo = { something: boolean; };
-class MyMix extends Mixins(addMixin1<MyInfo>, addMixin2, addMixin3<MyInfo>) {
+class MyMix extends mixins(mixinTest1<MyInfo>, mixinTest2, mixinTest3<MyInfo>) {
     test() {
         this.testMe({ something: true }); // Requires `MyInfo`.
         this.name = "Mixy"; // Requires `string`.
@@ -58,16 +58,16 @@ class MyMix extends Mixins(addMixin1<MyInfo>, addMixin2, addMixin3<MyInfo>) {
 }
 
 // Test failure.
-// .. addMixin3 is red-underlined (not assignable to `never`) as it requires addMixin1.
-class MyFail extends Mixins(addMixin3) { }
+// .. mixinTest3 is red-underlined (not assignable to `never`) as it requires mixinTest1.
+class MyFail extends mixins(mixinTest3) { }
 
 // If you use the above mixins manually, you get two problems (that's why `Mixins` function exists).
 // 1. The result won't give you the combined type. Though you could use MergeMixins or AsClass type to re-type it.
 // 2. You get problems with intermediate steps in the chain - unless you specifically want it.
 // +  The core reason for these problems is that each pair is evaluated separately, not as a continuum.
 //
-class MyManualMix extends addMixin3<MyInfo>(addMixin2(addMixin1<MyInfo>(Object))) {
-    // In the above line `addMixin2(...)` is red-underlined, because it doesn't fit `addMixin3`'s argument about requiring `addMixin1`.
+class MyManualMix extends mixinTest3<MyInfo>(mixinTest2(mixinTest1<MyInfo>(Object))) {
+    // In the above line `mixinTest2(...)` is red-underlined, because it doesn't fit `mixinTest3`'s argument about requiring `mixinTest1`.
     test() {
         this.testInfo({ something: false }); // testInfo red-underlined because not existing.
         this.someMember = 8; // someMember is red-underlined because because not existing.
@@ -86,18 +86,18 @@ class MyBase<Info = {}> {
     static STATIC_ONE = 1;
     testInfo(info: Info): void {}
 }
-const addMixin1 = (Base: ClassType) => class Mixin1 extends Base {
+const mixinTest1 = (Base: ClassType) => class Test1 extends Base {
     someMember: number = 5;
 }
-const addMixin2 = <Info = {}>(Base: typeof MyBase<Info>) => class Mixin2 extends Base {
+const mixinTest2 = <Info = {}>(Base: typeof MyBase<Info>) => class Test2 extends Base {
     enabled: boolean = false;
 }
-const addMixin3 = <Info = {}>(Base: ReturnType<typeof addMixin2<Info>>) => class Mixin3 extends Base { }
+const mixinTest3 = <Info = {}>(Base: ReturnType<typeof mixinTest2<Info>>) => class Test3 extends Base { }
 
 // Create a mixed class.
 // .. Provide MyInfo systematically to all that use it. Otherwise you get `unknown` for the related type.
 type MyInfo = { something: boolean; };
-class MyMix extends MixinsWith(MyBase<MyInfo>, addMixin1, addMixin2<MyInfo>, addMixin3<MyInfo>) {
+class MyMix extends mixinsWith(MyBase<MyInfo>, mixinTest1, mixinTest2<MyInfo>, mixinTest3<MyInfo>) {
     test() {
         this.testInfo({ something: false }); // Requires `MyInfo`.
         this.someMember = 8; // Requires `number`.
@@ -106,16 +106,16 @@ class MyMix extends MixinsWith(MyBase<MyInfo>, addMixin1, addMixin2<MyInfo>, add
 }
 
 // Test failure.
-// .. addMixin2 is red-underlined as it requires MyBase, Object is not enough.
-class MyFail extends MixinsWith(Object, addMixin2) { }
+// .. mixinTest2 is red-underlined as it requires MyBase, Object is not enough.
+class MyFail extends mixinsWith(Object, mixinTest2) { }
 
 // If you use the above mixins and base class manually, you get two problems (that's why `MixinsWith` function exists).
 // 1. The result won't give you the combined type. Though you could use MergeMixins or AsClass type to re-type it.
 // 2. You get problems with intermediate steps in the chain - unless you specifically want it.
 // +  The core reason for these problems is that each pair is evaluated separately, not as a continuum.
 //
-class MyManualMix extends addMixin3<MyInfo>(addMixin2<MyInfo>(addMixin1(MyBase<MyInfo>))) {
-    // In the above line `addMixin1(...)` is red-underlined, because it doesn't fit `addMixin2`'s argument about requiring `Base`.
+class MyManualMix extends mixinTest3<MyInfo>(mixinTest2<MyInfo>(mixinTest1(MyBase<MyInfo>))) {
+    // In the above line `mixinTest1(...)` is red-underlined, because it doesn't fit `mixinTest2`'s argument about requiring `Base`.
     test() {
         this.testInfo({ something: false }); // Requires `MyInfo`. // It's correct.
         this.someMember = 8; // someMember is red-underlined because because not existing.
@@ -135,22 +135,22 @@ class MyManualMix extends addMixin3<MyInfo>(addMixin2<MyInfo>(addMixin1(MyBase<M
 
 // You might want to pass the Info arg further to a mixed base, but TS won't allow it. 
 // .. In the lines below, <Info> is red-underlined, as base class expr. cannot ref. class type params.
-class MyClass_Wish<Info extends Record<string, any> = {}> extends Mixins(addMixin1<Info>) { }
-class MyClass_Wish_Manual<Info extends Record<string, any> = {}> extends addMixin1<Info>(Object) { }
+class MyClass_Wish<Info extends Record<string, any> = {}> extends mixins(mixinTest1<Info>) { }
+class MyClass_Wish_Manual<Info extends Record<string, any> = {}> extends mixinTest1<Info>(Object) { }
 
 // So instead do to this.
-// 1. Create a class extending addMixin using `as ClassType` to loosen the base class type.
+// 1. Create a class extending mixinTest1 using `as ClassType` to loosen the base class type.
 // .. Remarkably, _after_ setting up the interface below, we do have access to the base class even inside the extending class.
 //
-class MyClass<Info extends Record<string, any> = {}> extends (Mixins(addMixin1) as ClassType) {
+class MyClass<Info extends Record<string, any> = {}> extends (mixins(mixinTest1) as ClassType) {
     myMethod(key: keyof Info & string): number { return this.num; } // `num` is a recognized class member.
 }
 // 2. Create a matching interface extending what we actually want to extend.
 // .. Another remarkable thing is that there's no need to actually retype the class in the interface.
 //
-interface MyClass<Info extends Record<string, any> = {}> extends MixinsInstance<[typeof addMixin1<Info>]> { }
+interface MyClass<Info extends Record<string, any> = {}> extends MixinsInstance<[typeof mixinTest1<Info>]> { }
 // .. The line below would work equally well for a single mixin case like this.
-// interface MyClass<Info extends Record<string, any> = {}> extends InstanceType<ReturnType<typeof addMixin1<Info>>> { }
+// interface MyClass<Info extends Record<string, any> = {}> extends InstanceType<ReturnType<typeof mixinTest1<Info>>> { }
 
 // Test the result, and prove the claim in step 2.
 const myClass = new MyClass<MyInfo>();
@@ -166,14 +166,14 @@ myClass.num === value; // The type is `boolean`, and outcome `true` on JS side.
 
 // You might want to pass the Info arg further to a mixed base, but TS won't allow it. 
 // .. In the lines below, the <Info>s are red-underlined, as base class expressions cannot ref. class type params.
-class MyClass_Wish<Info extends Record<string, any> = {}> extends MixinsWith(MyBase<Info>, addMixin1) { }
-class MyClass_Wish_Manual<Info extends Record<string, any> = {}> extends addMixin1(MyBase<Info>) { }
+class MyClass_Wish<Info extends Record<string, any> = {}> extends mixinsWith(MyBase<Info>, mixinTest1) { }
+class MyClass_Wish_Manual<Info extends Record<string, any> = {}> extends mixinTest1(MyBase<Info>) { }
 
 // So instead do to this.
-// 1. Create a class extending addMixin using `as ClassType` to loosen the base class type.
+// 1. Create a class extending MyBase, mixinTest1 using `as ClassType` to loosen the base class type.
 // .. Remarkably, _after_ setting up the interface below, we do have access to the base class even inside the extending class.
 //
-class MyClass<Info extends Record<string, any> = {}> extends (MixinsWith(MyBase, addMixin1) as ClassType) {
+class MyClass<Info extends Record<string, any> = {}> extends (mixinsWith(MyBase, mixinTest1) as ClassType) {
     myMethod(key: keyof Info & string): number { return this.someMember; } // `someMember` is a recognized class member.
 }
 
@@ -181,7 +181,7 @@ class MyClass<Info extends Record<string, any> = {}> extends (MixinsWith(MyBase,
 // .. Another remarkable thing is that there's no need to actually retype the class in the interface. Just declare it.
 //
 interface MyClass<Info extends Record<string, any> = {}>
-    extends MixinsInstanceWith<typeof MyBase<Info>, [typeof addMixin1]> { }
+    extends MixinsInstanceWith<typeof MyBase<Info>, [typeof mixinTest1]> { }
 
 // Test the result, and prove the claim in step 2.
 const myClass = new MyClass<MyInfo>();
@@ -212,14 +212,14 @@ myClass.constructor.STATIC_ONE; // number
 // - Class - //
 
 // Some internal typing.
-export type SignalsRecord = Record<string, (...args: any[]) => void>;
+type SignalsRecord = Record<string, (...args: any[]) => void>;
 
-// Let's declare SignalBoy class using private untyped `_addSignalBoy(Object?: ClassType) => ClassType` as the basis.
-export class SignalBoy<Signals extends SignalsRecord = {}> extends _addSignalBoy() { }
+// Let's declare SignalBoy class using private untyped `_mixinSignalBoy(Object?: ClassType) => ClassType` as the basis.
+export class SignalBoy<Signals extends SignalsRecord = {}> extends _mixinSignalBoy() { }
 // Or alternatively use one mixin but retype with `as any as ClassType`.
 // .. Note that it's not enough with `as ClassType` (circularity).
 // .. Note also that if we had a base class would still use: `as any as ClassType` here.
-// export class SignalBoy<Signals extends SignalsRecord = {}> extends (addSignalBoy() as any as ClassType) { }
+// export class SignalBoy<Signals extends SignalsRecord = {}> extends (mixinSignalBoy() as any as ClassType) { }
 
 // Let's declare the interface with explicit typing.
 export interface SignalBoy<Signals extends SignalsRecord = {}> {
@@ -241,8 +241,8 @@ export interface SignalBoyType<Signals extends SignalsRecord = {}> extends Class
 
 // - Circular mixin - //
 
-// If _addSignalBoy would refer to SignalBoy (or SignalBoyType) explicitly, there would be a circular reference.
-function addSignalBoy_CIRCULAR<Data = {}, TBase extends ClassType = ClassType>(Base: TBase): SignalBoyType<Data> & TBase {
+// If _mixinSignalBoy would refer to SignalBoy (or SignalBoyType) explicitly, there would be a circular reference.
+function mixinSignalBoy_CIRCULAR<Data = {}, TBase extends ClassType = ClassType>(Base: TBase): SignalBoyType<Data> & TBase {
     return class SignalBoy extends Base {
         // ...
     } as any; // Would have to detach here from expected outcome.
@@ -252,8 +252,8 @@ function addSignalBoy_CIRCULAR<Data = {}, TBase extends ClassType = ClassType>(B
 
 ### 4.2. Avoiding circular references
 - To avoid the problem with circularity there are at least 2 main working approaches.
-    * #1 Retype the internal use of the mixin: `class SignalBoy extends (addSignalBoy() as any as ClassType) {}`.
-    * #2 Split the mixin to private and public parts: `class SignalBoy extends _addSignalBoy() {}`.
+    * #1 Retype the internal use of the mixin: `class SignalBoy extends (mixinSignalBoy() as any as ClassType) {}`.
+    * #2 Split the mixin to private and public parts: `class SignalBoy extends _mixinSignalBoy() {}`.
     * #3 DON'T: Use a non-class-linked dummy interface: eg. `interface _SignalBoy {}`. It leads to the problem of private/unexported interface.
 
 
@@ -264,7 +264,7 @@ function addSignalBoy_CIRCULAR<Data = {}, TBase extends ClassType = ClassType>(B
 // For local use only.
 // .. For clarity of usage and avoid problems with deepness,
 // .. we don't use the <Data> here at all and return ClassType.
-function _addSignalBoy(Base?: ClassType): ClassType {
+function _mixinSignalBoy(Base?: ClassType): ClassType {
     
     // Return extended class using simple non-typed variants inside.
     return class SignalBoy extends (Base || Object) {
@@ -289,19 +289,19 @@ function _addSignalBoy(Base?: ClassType): ClassType {
 /** Add DataBoy features to a base class.
  * - Provide BaseClass type specifically (2nd arg) or use AsMixin type helper.
  */
-export function addSignalBoy<
+export function mixinSignalBoy<
     Signals extends SignalsRecord = {},
     BaseClass extends ClassType = ClassType
 >(Base?: BaseClass): SignalBoyType<Signals> & BaseClass {
     // We just use the same internal JS method.
-    return _addSignalBoy(Base) as any;
+    return _mixinSignalBoy(Base) as any;
 }
 
 // For more complex cases, it's recommended to use the pattern below with AsClass.
 /** Add DataBoy features to a base class.
  * - Provide BaseClass type specifically (2nd arg) or use AsMixin type helper.
  */
-export function addSignalBoy_ALT<
+export function mixinSignalBoy_ALT<
     Signals extends SignalsRecord = {},
     BaseClass extends ClassType = ClassType
 >(Base?: BaseClass): AsClass<
@@ -313,7 +313,7 @@ export function addSignalBoy_ALT<
     any[]
 > {
     // We just use the same internal JS method.
-    return _addSignalBoy(Base) as any;
+    return _mixinSignalBoy(Base) as any;
 }
 
 ```
@@ -321,7 +321,7 @@ export function addSignalBoy_ALT<
 ### 4.3. Minor issue with losing the type of the base class
 
 - So the above works and there's no circularity and issues with deepness or when used externally.
-- The only annoyance is that the `addSignalBoy` above loses the automated BaseClass type from the actual arg.
+- The only annoyance is that the `mixinSignalBoy` above loses the automated BaseClass type from the actual arg.
 - This can be overcome externally in two ways: 1. Provide it with `typeof MyBase`, 2. Use `AsMixin` type helper.
 
 ```typescript
@@ -332,9 +332,9 @@ class MyBase {
     public name: string = "";
 }
 // 1. Just type it in using `typeof`.
-class MyMix1 extends addSignalBoy<MySignals, typeof MyBase>(MyBase) {}
+class MyMix1 extends mixinSignalBoy<MySignals, typeof MyBase>(MyBase) {}
 // 2. Or use `AsMixin` helper type.
-class MyMix2 extends (addSignalBoy as AsMixin<SignalBoy<MySignals>>)(MyBase) {}
+class MyMix2 extends (mixinSignalBoy as AsMixin<SignalBoy<MySignals>>)(MyBase) {}
 
 // In any case test.
 const myMix1 = new MyMix1();
@@ -354,7 +354,7 @@ myMix2.name; // string;
 
 // To uplift MyMix to have generic parameters, just define class + interface, like done above.
 // .. Class extending ClassType.
-class MyMix<AddSignals extends SignalsRecord = {}> extends (addSignalBoy(MyBase) as ClassType) {
+class MyMix<AddSignals extends SignalsRecord = {}> extends (mixinSignalBoy(MyBase) as ClassType) {
     // Just to define constructor explicitly. In our mixing chain, there's no constructor args.
     constructor() {
         super();
@@ -406,7 +406,7 @@ myMix.constructor.DEFAULT_TIMEOUT; // number | null
 
 ```typescript
 
-// Let's say we have two (simple) mixins: addDataMan, and addDataMonster that requires addDataMan.
+// Let's say we have two (simple) mixins: mixinDataMan, and mixinDataMonster that requires mixinDataMan.
 
 // DataMan.
 // .. Let's define interfaces for DataMan with two constructor args (data: Data, settings: Settings).
@@ -419,7 +419,7 @@ interface DataMan<Data = {}, Settings = {}> {
     settings: Settings;
 }
 // .. DataMan uses args for (data: Data, settings: Settings) and requires just ClassType base.
-function addDataMan<
+function mixinDataMan<
     Data = {},
     Settings = {},
     TBase extends ClassType = ClassType
@@ -439,7 +439,7 @@ function addDataMan<
 }
 
 // DataMonster has (stuff: Stuff) as args and requires DataManType.
-function addDataMonster<
+function mixinDataMonster<
     Stuff extends Partial<{ data: any; settings: any; }> = {},
     TBase extends DataManType = DataManType<Stuff["data"], Stuff["settings"]>
 >(Base: TBase): AsClass<
@@ -460,7 +460,7 @@ function addDataMonster<
 // Finally, as is evident, we cannot just add up the args based on order of mixins.
 // .. It's simply always the _last in the chain_ that defines the args, while all pass them on.
 type MyStuff = { data: { something: boolean; }; settings: any; };
-class MyMonster extends Mixins(addDataMan<MyStuff["data"], MyStuff["settings"]>, addDataMonster<MyStuff>) {
+class MyMonster extends mixins(mixinDataMan<MyStuff["data"], MyStuff["settings"]>, mixinDataMonster<MyStuff>) {
     test() {
         this.data; // { something: boolean; }
         this.settings; // any
@@ -503,8 +503,9 @@ myMonster.settings; // any
 ```typescript
 
 // On the JS side, the feature is implemented like this.
-// .. Usage: `class MyClass extends Mixins(addMixin1, addMixin2) { }`.
-export function Mixins(...mixins) {
+// .. Usage: `class MyClass extends mixins(mixinTest1, mixinTest2) { }`.
+// .. There's also `MixinsFunc` type for the TS side separately.
+export function mixins(...mixins) {
     return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Object);
 }
 
@@ -515,8 +516,9 @@ export function Mixins(...mixins) {
 ```typescript
 
 // On the JS side, the feature is implemented like this.
-// .. Usage: `class MyClass extends MixinsWith(BaseClass, addMixin1, addMixin2) { }`.
-export function MixinsWith(Base, ...mixins) {
+// .. Usage: `class MyClass extends mixinsWith(BaseClass, mixinTest1, mixinTest2) { }`.
+// .. There's also `MixinsWithFunc` type for the TS side separately.
+export function mixinsWith(Base, ...mixins) {
     return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Base);
 }
 
@@ -535,25 +537,25 @@ export function MixinsWith(Base, ...mixins) {
 
 // Array tools.
 /** Check if a tuple contains the given value type. */
-export type IncludesValue<Arr extends any[], Val extends any> = { [Key in keyof Arr]: Arr[Key] extends Val ? true : false }[number] extends false ? false : true;
+type IncludesValue<Arr extends any[], Val extends any> = { [Key in keyof Arr]: Arr[Key] extends Val ? true : false }[number] extends false ? false : true;
 
 // Iterators.
 /** Iterate down from 20 to 0. If iterates at 0 returns never. If higher than 20, returns 0. (With negative or other invalid returns all numeric options type.)
  * - When used, should not input negative, but go down from, say, `Arr["length"]`, and stop after 0.
  */
-export type IterateBackwards = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...0[]];
+type IterateBackwards = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...0[]];
 /** Iterate up from 0 to 20. If iterates at 20 or higher returns never. (With negative or other invalid returns all numeric options type.)
  * - When used, should not input negative, but go up from 0 until `Arr["length"]`.
  */
-export type IterateForwards = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...never[]];
+type IterateForwards = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...never[]];
 
 // Class tools.
 /** Get the type for class constructor arguments. */
-export type GetConstructorArgs<T> = T extends new (...args: infer U) => any ? U : never;
+type GetConstructorArgs<T> = T extends new (...args: infer U) => any ? U : never;
 /** Get the type for class constructor return. */
-export type GetConstructorReturn<T> = T extends new (...args: any[]) => infer U ? U : never;
+type GetConstructorReturn<T> = T extends new (...args: any[]) => infer U ? U : never;
 /** Get the type for class from class instance - the opposite of `InstanceType`. Optionally define constructor args. */
-export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
+type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
 
 ```
 
@@ -563,7 +565,7 @@ export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) 
 
 // - Arguments - //
 
-export type AsClass<
+type AsClass<
     Class, // Should refer to the type of the merged class type. For fluency type is any.
     Instance, // Should refer to the type of the merged class instance.
     // Optional. Can be used to define type constructor arguments for the resulting class.
@@ -596,10 +598,10 @@ mySubClass.constructor.SOMETHING_STATIC; // number;
 
 // - Arguments - //
 
-export type AsMixin<
+type AsMixin<
     // Just the instance type of the mixin class.
-    // .. If reading from the mixin func: `InstanceType<ReturnType<typeof addMyMixin>>`
-    // .. But most often more like: `MyMixin<SomeInfo>`, where MyMixin is interface (and class).
+    // .. If reading from the mixin func: `InstanceType<ReturnType<typeof mixinMyTest>>`
+    // .. But most often more like: `MyTest<SomeInfo>`, where MyTest is interface (and class).
     MixinInstance extends Object
 > = <TBase extends ClassType>(Base: TBase) =>
     Omit<TBase, "new"> & { new (...args: GetConstructorArgs<MixinInstance["constructor"]>): GetConstructorReturn<TBase> & MixinInstance; };
@@ -609,15 +611,15 @@ export type AsMixin<
 
 // Let's first examine a simple mixin with generic params.
 // .. It works fine, until things become more complex: you get problems with excessive deepness of types.
-const addMyMixin_Simple = <Info = {}>(Base: Base) => class MyMixin extends Base {
+const mixinMyTest_Simple = <Info = {}>(Base: Base) => class MyTest extends Base {
     feedInfo(info: Info): void {}
 }
 
 // To provide a mixin base without problems of deepness we can do the following.
-// .. Let's explicitly type what addMyMixin returns to help typescript.
-interface MyMixin<Info = {}> { feedInfo(info: Info): void; }
-function addMyMixin<Info = {}, BaseClass extends ClassType = ClassType>(Base: BaseClass): ClassType<MyMixin<Info>> {
-    return class MyMixin extends Base {
+// .. Let's explicitly type what mixinMyTest returns to help typescript.
+interface MyTest<Info = {}> { feedInfo(info: Info): void; }
+function mixinMyTest<Info = {}, BaseClass extends ClassType = ClassType>(Base: BaseClass): ClassType<MyTest<Info>> {
+    return class MyTest extends Base {
         feedInfo(info: Info): void {}
     }
 }
@@ -625,18 +627,18 @@ function addMyMixin<Info = {}, BaseClass extends ClassType = ClassType>(Base: Ba
 // The annoyance with above is that we lose automated typing of the BaseClass.
 // .. AsMixin simply provides a way to automate the typing of the base class.
 type MyInfo = { something: boolean; };
-class MyMix1 extends addMyMixin<MyInfo, typeof MyBase>(MyBase) { } // Needs to specify the base type explicitly here.
-class MyMix2 extends (addMyMixin as AsMixin<MyMixin<MyInfo>>)(MyBase) { } // Get MyBase type dynamically.
+class MyMix1 extends mixinMyTest<MyInfo, typeof MyBase>(MyBase) { } // Needs to specify the base type explicitly here.
+class MyMix2 extends (mixinMyTest as AsMixin<MyTest<MyInfo>>)(MyBase) { } // Get MyBase type dynamically.
 
 ```
 
-### 8.4. Mixin TS helpers: `EvaluateMixinChain<Mixins, BaseClass?>`
+### 8.4. Mixin TS helpers: `ValidateMixins<Mixins, BaseClass?>`
 
 ```typescript
 
 // - Arguments - //
 
-export type EvaluateMixinChain<
+type ValidateMixins<
     Mixins extends Array<any>,
     // Optional. Can be used to define type of the base class.
     BaseClass extends ClassType = ClassType
@@ -646,29 +648,29 @@ export type EvaluateMixinChain<
 // - Example - //
 
 // Create mixins.
-const addMixin1 = <Info = {}>(Base: ClassType) => class Mixin1 extends Base {
+const mixinTest1 = <Info = {}>(Base: ClassType) => class Test1 extends Base {
     testMe(testInfo: Info): void {}
 }
-const addMixin2 = <Info = {}>(Base: ReturnType<typeof addMixin1<Info>>) =>
-    class Mixin2 extends Base { }
+const mixinTest2 = <Info = {}>(Base: ReturnType<typeof mixinTest1<Info>>) =>
+    class Test2 extends Base { }
 
 // Create shortcuts for our tests below.
 type MyInfo = { test: boolean; };
-type Mixin1 = typeof addMixin1<MyInfo>;
-type Mixin2 = typeof addMixin2<MyInfo>;
+type Test1 = typeof mixinTest1<MyInfo>;
+type Test2 = typeof mixinTest2<MyInfo>;
 
 // Do some tests.
-type EvalMixins1 = EvaluateMixinChain<[Mixin1]>; // [typeof addMixin1<MyInfo>]
-type EvalMixins2 = EvaluateMixinChain<[Mixin2]>; // [never]
-type EvalMixins3 = EvaluateMixinChain<[Mixin1, Mixin2]>; // [typeof addMixin1<MyInfo>, typeof addMixin2<MyInfo>]
-type EvalMixins4 = EvaluateMixinChain<[Mixin2, Mixin1]>; // [never, typeof addMixin1<MyInfo>]
+type EvalMixins1 = ValidateMixins<[Test1]>; // [typeof mixinTest1<MyInfo>]
+type EvalMixins2 = ValidateMixins<[Test2]>; // [never]
+type EvalMixins3 = ValidateMixins<[Test1, Test2]>; // [typeof mixinTest1<MyInfo>, typeof mixinTest2<MyInfo>]
+type EvalMixins4 = ValidateMixins<[Test2, Test1]>; // [never, typeof mixinTest1<MyInfo>]
 type IsChain3Invalid = IncludesValue<EvalMixins3, never>; // false
 type IsChain4Invalid = IncludesValue<EvalMixins4, never>; // true
 
 // Funkier tests.
-type EvalMixins5 = EvaluateMixinChain<[Mixin1, Mixin2, "string"]>; // [..., never]
-type EvalMixins6 = EvaluateMixinChain<[Mixin1, Mixin2, () => {}]>; // [..., never]
-type EvalMixins7 = EvaluateMixinChain<[Mixin1, Mixin2, (Base: ClassType) => ClassType ]>; // All ok.
+type EvalMixins5 = ValidateMixins<[Test1, Test2, "string"]>; // [..., never]
+type EvalMixins6 = ValidateMixins<[Test1, Test2, () => {}]>; // [..., never]
+type EvalMixins7 = ValidateMixins<[Test1, Test2, (Base: ClassType) => ClassType ]>; // All ok.
 
 
 ```
@@ -694,24 +696,24 @@ type MergeMixins<
 // - Example - //
 
 // Create mixins.
-const addMixin1 = <Info = {}>(Base: ClassType) => class Mixin1 extends Base {
+const mixinTest1 = <Info = {}>(Base: ClassType) => class Test1 extends Base {
     testMe(testInfo: Info): void {}
 }
-const addMixin2 = <Info = {}>(Base: ReturnType<typeof addMixin1<Info>>) => class Mixin2 extends Base {
+const mixinTest2 = <Info = {}>(Base: ReturnType<typeof mixinTest1<Info>>) => class Test2 extends Base {
     static STATIC_ONE = 1;
 }
-const addMixin3 = (Base: ClassType) => class Mixin3 extends Base {
+const mixinTest3 = (Base: ClassType) => class Test3 extends Base {
     name: string = "";
 }
 
 // Merge the types manually.
 type MyInfo = { test: boolean; };
-type Mixins = [typeof addMixin1<MyInfo>, typeof addMixin2<MyInfo>, typeof addMixin3]; // Pass the MyInfo to all that need it.
+type Mixins = [typeof mixinTest1<MyInfo>, typeof mixinTest2<MyInfo>, typeof mixinTest3]; // Pass the MyInfo to all that need it.
 type MergedClassType = MergeMixins<Mixins>;
 
-// Extra. MergeMixins does not evaluate the chain. Do it with EvaluateMixinChain.
-type IsChainInvalid = IncludesValue<EvaluateMixinChain<Mixins>, never>; // false
-type IsChainInvalidNow = IncludesValue<EvaluateMixinChain<[Mixins[1], Mixins[0], Mixins[2]]>, never>; // true
+// Extra. MergeMixins does not evaluate the chain. Do it with ValidateMixins.
+type IsChainInvalid = IncludesValue<ValidateMixins<Mixins>, never>; // false
+type IsChainInvalidNow = IncludesValue<ValidateMixins<[Mixins[1], Mixins[0], Mixins[2]]>, never>; // true
 
 // Fake a class.
 const MergedClass = class MergedClass { } as unknown as MergedClassType;
@@ -719,7 +721,7 @@ const mergedClass = new MergedClass();
 
 // Do funky tests.
 mergedClass.testMe({ test: false });
-mergedClass.testMe({ test: 5 }); // Fails - "test" is red-underlined. It's `unknown` if MyInfo only passed to addMixin1 or addMixin2, not both.
+mergedClass.testMe({ test: 5 }); // Fails - "test" is red-underlined. It's `unknown` if MyInfo only passed to mixinTest1 or mixinTest2, not both.
 mergedClass.constructor.STATIC_ONE; // number
 mergedClass.name = "Mergy";
 
@@ -732,7 +734,7 @@ mergedClass.name = "Mergy";
 
 // - Arguments - //
 
-export type MixinsInstance<
+type MixinsInstance<
     Mixins extends Array<(Base: ClassType) => ClassType>,
     // Optional. Define ConstructorArgs, defaults to the args of the _last mixin_.
     ConstructorArgs extends any[] = UnknownProcessToGetLastMixinArgs
@@ -742,22 +744,22 @@ export type MixinsInstance<
 // - Example - //
 
 // 0. Create a mixin.
-const addMixin1 = <Info = {}>(Base: ClassType) => class Mixin1 extends Base {
+const mixinTest1 = <Info = {}>(Base: ClassType) => class Test1 extends Base {
     num: number = 5;
     testMe(testInfo: Info): void {}
 }
 // .. Optionally collect mixins to a shortcut.
-type MyMixins = [typeof addMixin1<Info>];
+type MyTests = [typeof mixinTest1<Info>];
 
 // 1. Create a mixed class.
-class MyClass<Info extends Record<string, any> = {}> extends (Mixins(addMixin1) as ClassType) {
+class MyClass<Info extends Record<string, any> = {}> extends (mixins(mixinTest1) as ClassType) {
     myMethod(key: keyof Info & string): number {
         return this.num; // `num` is a recognized class member.
     }
 }
 
 // 2. Create a matching interface extending what we actually want to extend.
-interface MyClass<Info extends Record<string, any> = {}> extends MixinsInstance<MyMixins> { }
+interface MyClass<Info extends Record<string, any> = {}> extends MixinsInstance<MyTests> { }
 
 // Test.
 type MyInfo = { something: boolean; };
@@ -776,7 +778,7 @@ myClass.num === value; // The type is `boolean`, and outcome `true` on JS side.
 
 // - Arguments - //
 
-export type MergeMixinsWith<
+type MergeMixinsWith<
     BaseClass extends ClassType,
     Mixins extends Array<(Base: ClassType) => ClassType>,
     // Optional. Define ConstructorArgs, defaults to the args of the _last mixin_.
@@ -787,7 +789,7 @@ export type MergeMixinsWith<
 // - Example - //
 
 class MyBaseClass { }
-type MyBaseMix = MergeMixinsWith<typeof MyBaseClass, MyMixinsArray>;
+type MyBaseMix = MergeMixinsWith<typeof MyBaseClass, MyTestsArray>;
 
 ```
 
@@ -798,7 +800,7 @@ type MyBaseMix = MergeMixinsWith<typeof MyBaseClass, MyMixinsArray>;
 
 // - Arguments - //
 
-export type MixinsInstanceWith<
+type MixinsInstanceWith<
     BaseClass extends ClassType,
     Mixins extends Array<(Base: ClassType) => ClassType>,
     // Optional. Define ConstructorArgs, defaults to the args of the _last mixin_.
@@ -813,12 +815,12 @@ class MyBase<Info = {}> {
     static STATIC_ONE = 1;
     testInfo(info: Info): void {}
 }
-const addMixin1 = (Base: ClassType) => class Mixin1 extends Base {
+const mixinTest1 = (Base: ClassType) => class Test1 extends Base {
     someMember: number = 5;
 }
 
 // 1. Create a mixed class.
-class MyClass<Info extends Record<string, any> = {}> extends (MixinsWith(MyBase, addMixin1) as ClassType) {
+class MyClass<Info extends Record<string, any> = {}> extends (mixinsWith(MyBase, mixinTest1) as ClassType) {
     myMethod(key: keyof Info & string): number {
         return this.someMember; // `someMember` is a recognized class member.
     }
@@ -826,7 +828,7 @@ class MyClass<Info extends Record<string, any> = {}> extends (MixinsWith(MyBase,
 
 // 2. Create a matching interface extending what we actually want to extend.
 interface MyClass<Info extends Record<string, any> = {}>
-    extends MixinsInstanceWith<typeof MyBase<Info>, [typeof addMixin1]> { }
+    extends MixinsInstanceWith<typeof MyBase<Info>, [typeof mixinTest1]> { }
 
 // Test the result, and prove the claim in step 2.
 type MyInfo = { something: boolean; };
@@ -835,6 +837,27 @@ const value = myClass.myMethod("something"); // Requires `keyof MyInfo & string`
 myClass.testInfo({ something: true });// Requires `MyInfo`.
 myClass.someMember = 3; // Requires `number`.
 myClass.constructor.STATIC_ONE; // number
+
+```
+
+### 8.7. Mixin TS funcs: `MixinsFunc<Mixins>` and `MixinsWithFunc<Base, Mixins>`
+- These are simply the types for the `mixins` and `mixinsWith` JS functions for reusing the same type logic.
+
+```typescript
+
+// - Arguments - //
+
+// For `mixins` function.
+type MixinsFunc = <
+    Mixins extends Array<(Base: ClassType) => ClassType>
+>(...mixins: ValidateMixins<Mixins>) => MergeMixins<Mixins>;
+
+// For `mixinsWith` function.
+type MixinsWithFunc = <
+    Base extends ClassType,
+    Mixins extends Array<(Base: ClassType) => ClassType>
+>(Base: Base, ...mixins: ValidateMixins<Mixins, Base>) => MergeMixinsWith<Base, Mixins>;
+
 
 ```
 
@@ -847,7 +870,7 @@ myClass.constructor.STATIC_ONE; // number
 ```typescript
 
 /** Get class type from class instance type with optional constr. args. The opposite of `InstanceType`. */
-export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
+type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
 
 /** Re-type class.
  * Parameters and return:
@@ -856,7 +879,7 @@ export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) 
  * @param ConstructorArgs Constructor arguments of the new class. Defaults to any[].
  * @returns The returned type is a new class type, with recursive class <-> instance support.
  */
-export type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Class, "new"> & {
+type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Class, "new"> & {
     // The ["constructor"] part is optional, but provides a typed link to the static side and back recursively.
     new (...args: ConstructorArgs): Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; };
 };

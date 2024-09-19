@@ -6,8 +6,8 @@
  * // - Actual JS implementation - //
  *
  * // On the JS side, the feature is implemented like this.
- * // .. For example: `class MyClass extends Mixins(addMixin1, addMixin2) { }`.
- * export function Mixins(...mixins) {
+ * // .. For example: `class MyClass extends mixins(addMixin1, addMixin2) { }`.
+ * export function mixins(...mixins) {
  *     return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Object);
  * }
  *
@@ -22,7 +22,7 @@
  * // Create a mixed class.
  * // .. Provide MyInfo systematically to all that use it. Otherwise you get `unknown` for the related type.
  * type MyInfo = { something: boolean; };
- * class MyMix extends Mixins(addMixin1<MyInfo>, addMixin2, addMixin3<MyInfo>) {
+ * class MyMix extends mixins(addMixin1<MyInfo>, addMixin2, addMixin3<MyInfo>) {
  *     test() {
  *         this.testMe({ something: true }); // Requires `MyInfo`.
  *         this.name = "Mixy"; // Requires `string`.
@@ -32,12 +32,12 @@
  *
  * // Test failure.
  * // .. addMixin3 is red-underlined (not assignable to `never`) as it requires addMixin1.
- * class MyFail extends Mixins(addMixin3) { }
+ * class MyFail extends mixins(addMixin3) { }
  *
  *
  * // - About mixing manually - //
  *
- * // If you use the above mixins manually, you might run into two problems (that's why `Mixins` function exists).
+ * // If you use the above mixins manually, you might run into two problems (that's why `mixins` function exists).
  * // 1. The result won't give you the combined type. Though you could use MergeMixins or AsClass type to re-type it.
  * // 2. You get problems with intermediate steps in the chain - unless you specifically want it.
  * // +  The core reason for these problems is that each pair is evaluated separately, not as a continuum.
@@ -57,7 +57,7 @@
  * // So instead do to this.
  * // 1. Create a class extending addMixin using `as ClassType` to loosen the base class type.
  * // .. Remarkably, _after_ setting up the interface below, we do have access to the base class even inside the extending class.
- * class MyClass<Info extends Record<string, any> = {}> extends (Mixins(addMixin1) as ClassType) {
+ * class MyClass<Info extends Record<string, any> = {}> extends (mixins(addMixin1) as ClassType) {
  *     myMethod(key: keyof Info & string): number { return this.num; } // `num` is a recognized class member.
  * }
  * // 2. Create a matching interface extending what we actually want to extend.
@@ -119,7 +119,7 @@
  *
  * ```
  */
-declare function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(...mixins: EvaluateMixinChain<Mixins>): MergeMixins<Mixins>;
+declare function mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(...mixins: ValidateMixins<Mixins>): MergeMixins<Mixins>;
 /** Helper to create a mixed class with a base class and a sequence of mixins in ascending order: `[Base, addMixin1, addMixin2, ...]`.
  * - The typeguard evaluates each mixin up to 20 individually (by mixin form and implied requirements), the rest is not evaluated.
  * - Note that in cases where mixins are dependent on each other and support type arguments, provide them for all in the chain, including the base class.
@@ -128,8 +128,8 @@ declare function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(..
  * // - Actual JS implementation - //
  *
  * // On the JS side, the feature is implemented like this.
- * // .. For example: `class MyClass extends MixinsWith(BaseClass, addMixin1, addMixin2) { }`.
- * export function MixinsWith(Base, ...mixins) {
+ * // .. For example: `class MyClass extends mixinsWith(BaseClass, addMixin1, addMixin2) { }`.
+ * export function mixinsWith(Base, ...mixins) {
  *     return mixins.reduce((ExtBase, mixin) => mixin(ExtBase), Base);
  * }
  *
@@ -145,7 +145,7 @@ declare function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(..
  * // Create a mixed class.
  * // .. Provide MyInfo systematically to all that use it. Otherwise you get `unknown` for the related type.
  * type MyInfo = { something: boolean; };
- * class MyMix extends MixinsWith(MyBase<MyInfo>, addMixin1, addMixin2<MyInfo>, addMixin3<MyInfo>) {
+ * class MyMix extends mixinsWith(MyBase<MyInfo>, addMixin1, addMixin2<MyInfo>, addMixin3<MyInfo>) {
  *     test() {
  *         this.testInfo({ something: false }); // Requires `MyInfo`.
  *         this.someMember = 8; // Requires `number`.
@@ -155,12 +155,12 @@ declare function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(..
  *
  * // Test failure.
  * // .. addMixin2 is red-underlined as it requires MyBase, Object is not enough.
- * class MyFail extends MixinsWith(Object, addMixin2) { }
+ * class MyFail extends mixinsWith(Object, addMixin2) { }
  *
  *
  * // - About mixing manually - //
  *
- * // If you use the above mixins and base class manually, you get two problems (that's why `MixinsWith` function exists).
+ * // If you use the above mixins and base class manually, you get two problems (that's why `mixinsWith` function exists).
  * // 1. The result won't give you the combined type. Though you could use MergeMixins or AsClass type to re-type it.
  * // 2. You get problems with intermediate steps in the chain - unless you specifically want it.
  * // +  The core reason for these problems is that each pair is evaluated separately, not as a continuum.
@@ -179,13 +179,13 @@ declare function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(..
  *
  * // You might want to pass the Info arg further to a mixed base, but TS won't allow it.
  * // .. In the lines below, both <Info> are red-underlined, as base class expressions cannot ref. class type params.
- * class MyClass_Wish<Info extends Record<string, any> = {}> extends MixinsWith(MyBase<Info>, addMixin1) { }
+ * class MyClass_Wish<Info extends Record<string, any> = {}> extends mixinsWith(MyBase<Info>, addMixin1) { }
  * class MyClass_Wish_Manual<Info extends Record<string, any> = {}> extends addMixin1(MyBase<Info>) { }
  *
  * // So instead do to this.
  * // 1. Create a class extending addMixin using `as ClassType` to loosen the base class type.
  * // .. Remarkably, _after_ setting up the interface below, we do have access to the base class even inside the extending class.
- * class MyClass<Info extends Record<string, any> = {}> extends (MixinsWith(MyBase, addMixin1) as ClassType) {
+ * class MyClass<Info extends Record<string, any> = {}> extends (mixinsWith(MyBase, addMixin1) as ClassType) {
  *     myMethod(key: keyof Info & string): number { return this.someMember; } // `someMember` is a recognized class member.
  * }
  *
@@ -250,7 +250,7 @@ declare function Mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(..
  *
  * ```
  */
-declare function MixinsWith<Base extends ClassType, Mixins extends Array<(Base: ClassType) => ClassType>>(Base: Base, ...mixins: EvaluateMixinChain<Mixins, Base>): MergeMixinsWith<Base, Mixins>;
+declare function mixinsWith<Base extends ClassType, Mixins extends Array<(Base: ClassType) => ClassType>>(Base: Base, ...mixins: ValidateMixins<Mixins, Base>): MergeMixinsWith<Base, Mixins>;
 /** Check if a tuple contains the given value type. */
 type IncludesValue<Arr extends any[], Val extends any> = {
     [Key in keyof Arr]: Arr[Key] extends Val ? true : false;
@@ -348,22 +348,22 @@ type AsMixin<MixinInstance extends Object> = <TBase extends ClassType>(Base: TBa
  * type Mixin2 = typeof addMixin2<MyInfo>;
  *
  * // Do some tests.
- * type EvalMixins1 = EvaluateMixinChain<[Mixin1]>; // [typeof addMixin1<MyInfo>]
- * type EvalMixins2 = EvaluateMixinChain<[Mixin2]>; // [never]
- * type EvalMixins3 = EvaluateMixinChain<[Mixin1, Mixin2]>; // [typeof addMixin1<MyInfo>, typeof addMixin2<MyInfo>]
- * type EvalMixins4 = EvaluateMixinChain<[Mixin2, Mixin1]>; // [never, typeof addMixin1<MyInfo>]
+ * type EvalMixins1 = ValidateMixins<[Mixin1]>; // [typeof addMixin1<MyInfo>]
+ * type EvalMixins2 = ValidateMixins<[Mixin2]>; // [never]
+ * type EvalMixins3 = ValidateMixins<[Mixin1, Mixin2]>; // [typeof addMixin1<MyInfo>, typeof addMixin2<MyInfo>]
+ * type EvalMixins4 = ValidateMixins<[Mixin2, Mixin1]>; // [never, typeof addMixin1<MyInfo>]
  * type IsChain3Invalid = IncludesValue<EvalMixins3, never>; // false
  * type IsChain4Invalid = IncludesValue<EvalMixins4, never>; // true
  *
  * // Funkier tests.
- * type EvalMixins5 = EvaluateMixinChain<[Mixin1, Mixin2, "string"]>; // [..., never]
- * type EvalMixins6 = EvaluateMixinChain<[Mixin1, Mixin2, () => {}]>; // [..., never]
- * type EvalMixins7 = EvaluateMixinChain<[Mixin1, Mixin2, (Base: ClassType) => ClassType ]>; // All ok.
+ * type EvalMixins5 = ValidateMixins<[Mixin1, Mixin2, "string"]>; // [..., never]
+ * type EvalMixins6 = ValidateMixins<[Mixin1, Mixin2, () => {}]>; // [..., never]
+ * type EvalMixins7 = ValidateMixins<[Mixin1, Mixin2, (Base: ClassType) => ClassType ]>; // All ok.
  *
  *
  * ```
  */
-type EvaluateMixinChain<Mixins extends Array<any>, BaseClass extends ClassType = ClassType, Processed extends Array<((Base: ClassType) => ClassType) | never> = [], Index extends number | never = 0> = Index extends Mixins["length"] ? Processed : Index extends never ? IncludesValue<Processed, never> extends true ? [...Processed, ...any] : Mixins : Mixins[Index] extends undefined ? IncludesValue<Processed, never> extends true ? [...Processed, ...any] : Mixins : Mixins[Index] extends (Base: ClassType) => ClassType ? EvaluateMixinChain<Mixins, BaseClass & ReturnType<Mixins[Index]>, BaseClass extends Parameters<Mixins[Index]>[0] ? [...Processed, Mixins[Index]] : [...Processed, never], IterateForwards[Index]> : EvaluateMixinChain<Mixins, BaseClass, [...Processed, never], IterateForwards[Index]>;
+type ValidateMixins<Mixins extends Array<any>, BaseClass extends ClassType = ClassType, Processed extends Array<((Base: ClassType) => ClassType) | never> = [], Index extends number | never = 0> = Index extends Mixins["length"] ? Processed : Index extends never ? IncludesValue<Processed, never> extends true ? [...Processed, ...any] : Mixins : Mixins[Index] extends undefined ? IncludesValue<Processed, never> extends true ? [...Processed, ...any] : Mixins : Mixins[Index] extends (Base: ClassType) => ClassType ? ValidateMixins<Mixins, BaseClass & ReturnType<Mixins[Index]>, BaseClass extends Parameters<Mixins[Index]>[0] ? [...Processed, Mixins[Index]] : [...Processed, never], IterateForwards[Index]> : ValidateMixins<Mixins, BaseClass, [...Processed, never], IterateForwards[Index]>;
 /** Intersect mixins to a new clean class.
  * - Note that if the mixins contain dependencies of other mixins, should type the dependencies fully to avoid unknown. See below.
  * - Put in optional 2nd argument to type ConstructorArgs for the final outcome explicitly. Defaults to the args of the last in chain.
@@ -379,9 +379,9 @@ type EvaluateMixinChain<Mixins extends Array<any>, BaseClass extends ClassType =
  * type Mixins = [typeof addMixin1<MyInfo>, typeof addMixin2<MyInfo>, typeof addMixin3]; // Pass the MyInfo to all that need it.
  * type MergedClassType = MergeMixins<Mixins>;
  *
- * // Extra. MergeMixins does not evaluate the chain. Do it with EvaluateMixinChain.
- * type IsChainInvalid = IncludesValue<EvaluateMixinChain<Mixins>, never>; // false
- * type IsChainInvalidNow = IncludesValue<EvaluateMixinChain<[Mixins[1], Mixins[0], Mixins[2]]>, never>; // true
+ * // Extra. MergeMixins does not evaluate the chain. Do it with ValidateMixins.
+ * type IsChainInvalid = IncludesValue<ValidateMixins<Mixins>, never>; // false
+ * type IsChainInvalidNow = IncludesValue<ValidateMixins<[Mixins[1], Mixins[0], Mixins[2]]>, never>; // true
  *
  * // Fake a class.
  * const MergedClass = class MergedClass { } as unknown as MergedClassType;
@@ -409,5 +409,9 @@ type MergeMixinsWith<BaseClass extends ClassType, Mixins extends Array<(Base: Cl
  * - For example: `MixinsInstanceWith<typeof MyBaseClass, MixinsArray, ConstructorArgs?>`.
  */
 type MixinsInstanceWith<BaseClass extends ClassType, Mixins extends Array<(Base: ClassType) => ClassType>, ConstructorArgs extends any[] = Mixins["length"] extends 0 ? any[] : GetConstructorArgs<ReturnType<Mixins[IterateBackwards[Mixins["length"]]]>>> = InstanceType<MergeMixins<Mixins, ConstructorArgs, BaseClass, InstanceType<BaseClass>>>;
+/** The type for the `mixins` function, including evaluating the sequence and returning combined class type. */
+type MixinsFunc = <Mixins extends Array<(Base: ClassType) => ClassType>>(...mixins: ValidateMixins<Mixins>) => MergeMixins<Mixins>;
+/** The type for the `mixinsWith` function, including evaluating the sequence and returning combined class type. */
+type MixinsWithFunc = <Base extends ClassType, Mixins extends Array<(Base: ClassType) => ClassType>>(Base: Base, ...mixins: ValidateMixins<Mixins, Base>) => MergeMixinsWith<Base, Mixins>;
 
-export { AsClass, AsMixin, ClassType, EvaluateMixinChain, GetConstructorArgs, GetConstructorReturn, IncludesValue, IterateBackwards, IterateForwards, MergeMixins, MergeMixinsWith, Mixins, MixinsInstance, MixinsInstanceWith, MixinsWith };
+export { AsClass, AsMixin, ClassType, GetConstructorArgs, GetConstructorReturn, IncludesValue, IterateBackwards, IterateForwards, MergeMixins, MergeMixinsWith, MixinsFunc, MixinsInstance, MixinsInstanceWith, MixinsWithFunc, ValidateMixins, mixins, mixinsWith };
