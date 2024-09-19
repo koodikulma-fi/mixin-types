@@ -197,7 +197,7 @@ myClass.constructor.STATIC_ONE; // number
 - However, as things get more complex, you probably run into an issue with excessive deepness of the mixin types.
 - Solutions to overcome this issue easily lead to others. So below is the recommended approach:
     1. Issue with excessive deepness. -> Use explicit typing.
-    2. Issues with circular reference when using explicit typing. -> Retype as `ClassType` or use private + public mixin.
+    2. Issues with circular reference with explicit typing. -> Retype as `ClassType` or use private + public mixin.
     3. Minor issue with losing the type of the base class. -> Can use `typeof MyBase` or `AsMixin` helper.
 
 ### 1. Excessive deepness -> explicit typing
@@ -317,10 +317,8 @@ export function addSignalBoy_ALT<
 ### 3. Minor issue with losing the type of the base class
 
 - So the above works and there's no circularity and issues with deepness or when used externally.
-- The only minor issue is that the form of `addSignalBoy` above loses the automated BaseClass type from the actual argument.
-- This can be overcome externally in two ways:
-    1. Simply provide it by adding `typeof MyBase`.
-    2. Or use the `AsMixin` type helper.
+- The only minor issue is that the `addSignalBoy` above loses the automated BaseClass type from the actual argument.
+- This can be overcome externally in two ways: 1. Provide it with `typeof MyBase`, 2. Use `AsMixin` type helper.
 
 ```typescript
 
