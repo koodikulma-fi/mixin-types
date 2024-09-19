@@ -61,7 +61,7 @@ class MyMix extends mixins(mixinTest1<MyInfo>, mixinTest2, mixinTest3<MyInfo>) {
 // .. mixinTest3 is red-underlined (not assignable to `never`) as it requires mixinTest1.
 class MyFail extends mixins(mixinTest3) { }
 
-// If you use the above mixins manually, you get two problems (that's why `mixins` function exists).
+// If you use the above mixins manually, you can run into two problems (that's why `mixins` function exists).
 // 1. The result won't give you the combined type. Though you could use MergeMixins or AsClass type to re-type it.
 // 2. You get problems with intermediate steps in the chain - unless you specifically want it.
 // +  The core reason for these problems is that each pair is evaluated separately, not as a continuum.
