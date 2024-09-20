@@ -338,7 +338,7 @@ export function mixinSignalBoy_ALT<
 
 ### 4.3. Minor issue with losing the type of the base class
 
-- So the above works and there's no circularity and issues with deepness or when used externally.
+- So the above works and there's no circularity nor issues with deepness when used externally.
 - The only annoyance is that the `mixinSignalBoy` above loses the automated BaseClass type from the actual arg.
 - This can be overcome externally in two ways: 1. Provide it with `typeof MyBase`, 2. Use `AsMixin` type helper.
 
@@ -366,7 +366,7 @@ myMix2.name; // string;
 
 ```
 
-### Extra - elevating MyMix to have generic parameters
+### 4.4 Extra - elevating MyMix to have generic parameters
 
 ```typescript
 
@@ -407,6 +407,7 @@ myMix.constructor.DEFAULT_TIMEOUT; // number | null
 ### 5.1. Rules of thumb
 - Generally speaking, you should prefer _not_ using constructor arguments in mixins.
     * When needed, keep them simple, and use fixed number of arguments (eg. not 1-3 args, but eg. 2).
+        - Or alternatively, in certain cases, consider using the _same_ constructor arg(s) for all mixins.
     * Note also that it's not possible to automate typing for constructor arguments (see the code example below).
     * As it's always the _last mixin / extending class_ that defines the args - and as such, should do it explicitly.
 - At the conceptual level, the constructor args of the mix should be defined for each mix explicitly.
