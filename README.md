@@ -495,15 +495,15 @@ myMonster.settings; // any
 
 ## 6. LIMITS OF `instanceof` WITH MIXINS
 - The usage of `instanceof` is very limited with mixins as mixins always produce a new class.
-    * That is, you can't know which mixins a class extends using `instanceof`, since each extended mixin class was dynamically created.
-    * However, the final class itself is compatible with `instanceof` perfectly well - in case you have other classes extending it.
+    * That is, you can't use `instanceof` to check for mixin bases, since each mixin class was dynamically created.
+    * However, the final class is compatible with `instanceof` - in case you have other classes extending it.
 - Examples of working around.
-    * #1: Use mixins only as building blocks to compose the "main classes" (which form a clean tree) and use `instanceof` only for them.
-        - If you want to use mixins on your main class tree, it will necessarily complicate using `instanceof` -> approach #2.
+    * #1: Use mixins only as building blocks to compose the "main classes" and use `instanceof` only for them.
+        - Using mixins on your main class tree will necessarily complicate using `instanceof` -> approach #2.
     * #2: Manual implementation. For example:
         - Add `static CLASS_NAMES: string[]` member that is required for all mixins (and classes) in your system. Let's call it `BaseClassType`.
-        - Each time a mixin extends a class, it should add its unique mixin (class) name to its static CLASS_NAMES member.
-            * Likewise classes would add them on the static side: `static CLASS_NAMES = [...MyBaseClass.CLASS_NAMES, "MyClass"]`.
+        - When a mixin extends a class, it adds its unique mixin (class) name to its static CLASS_NAMES member.
+            * Likewise classes add their names on the static side: `static CLASS_NAMES = [...MyBaseClass.CLASS_NAMES, "MyClass"]`.
         - Finally, you'd have a custom function for checking inheritance:
             * `isInstanceOf(Class: BaseClassType, className: string): boolean { return Class.CLASS_NAMES.includes(className); }`.
 - It's also worth noting that the larger architectural choices at the conceptual level have reverberations all the way down to these details.
