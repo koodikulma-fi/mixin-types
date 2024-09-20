@@ -356,6 +356,21 @@ export type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Om
  * // You can do this:
  * interface MyThing<Info = {}> extends AsInstance<Test1 & Test2<Info> & MyBase> {}
  * 
+ * // However, consider including the static side, too:
+ * interface MyThing<Info = {}> extends AsInstance<
+ *     Test1 & Test2<Info> & MyBase,
+ *     Test1Type & Test2Type<Info> & MyBaseType
+ * > {}
+ * 
+ * // Typescript reads the arguments from the class side, so should combine with class declaration.
+ * class MyThing<Info = {}> extends mixinsWith(MyBase, mixinTest1, mixinTest2<Info>) {
+ *     myNumber: number;
+ *     constructor(myNumber: boolean) {
+ *          super(); // In our simple example, we don't have any args.
+ *          this.myNumber = myNumber;
+ *     }
+ * }
+ * 
  * 
  * ```
  * Extra notes:
@@ -368,15 +383,15 @@ export type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Om
  *          * Especially related to using `this as MyThing` inside the class (to cut external generics away from `MyThing<Info>`).
  *          * However the deepness only appears with certain other prerequisites (such as using "constructor" in the interfaces to extend).
  *      3. As an instance based alternative to `AsClass`.
- *          * That is, if you want to specifically define the constructor args (2nd arg), or the static side (3rd arg) of the class.
+ *          * That is, if you want to specifically define the static side (2nd arg) of the class, or constructor args (3rd arg).
  *          * However, typescript reads constructor args from the `class` instead, so only helps when using the .constructor from the instance.
  * 
  */
 export type AsInstance<
     Instance extends Object,
     // Optional args.
-    ConstructorArgs extends any[] = any[],
-    Class = Instance["constructor"]
+    Class = Instance["constructor"],
+    ConstructorArgs extends any[] = any[]
 > = Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; }
 
 // Mixin re-typing.

@@ -614,7 +614,7 @@ mySubClass.constructor.SOMETHING_STATIC; // number;
 
 ```
 
-### 8.3. Mixin TS helpers: `AsInstance<Instance, ConstructorArgs?, Class?>`
+### 8.3. Mixin TS helpers: `AsInstance<Instance, Class?, ConstructorArgs?>`
 
 ```typescript
 
@@ -623,8 +623,8 @@ mySubClass.constructor.SOMETHING_STATIC; // number;
 type AsInstance<
     Instance extends Object, // The instance to re-instance.
     // Optional args.
-    ConstructorArgs extends any[] = any[],
-    Class = Instance["constructor"]
+    Class = Instance["constructor"],
+    ConstructorArgs extends any[] = any[]
 > = Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; }
 
 
