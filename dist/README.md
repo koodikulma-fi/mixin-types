@@ -223,7 +223,7 @@ myClass.constructor.STATIC_ONE; // number
 
 ### 4.1. Excessive deepness -> explicit typing
 - Firstly, to overcome the problem of excessive deepness of the types, the solution is to use explicit typing.
-- So the mixin function itself should define explicitly what it returns, so that typescript won't have to interpret it from the code.
+- So the mixin func should define explicitly what it returns, so that TS won't try to interpret it from the code.
 
 ```typescript
 
