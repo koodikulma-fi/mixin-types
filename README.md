@@ -915,7 +915,7 @@ type MixinsWithFunc = <
 ---
 
 ## 9. SHORTCUT - 2 SIMPLE TYPES TO SOLVE IT ALL
-- In practice, you often might just need two very simple types from the library: `ClassType` and `AsClass`.
+- In simple cases, you might just need two very simple types from the library: `ClassType` and `AsClass`.
 - In case they are all you need, you might just as well copy them to your types, as they are very simple.
 
 ```typescript
