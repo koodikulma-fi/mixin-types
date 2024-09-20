@@ -1,7 +1,4 @@
 
-## TODO:
-- AsInstance... And teh special cases realted to this in usage..
-
 ## WHAT
 
 `mixin-types` is a tiny library providing typing tools for mixin classes and 2 simple JS funcs (`mixins` and `mixinsWith`).
