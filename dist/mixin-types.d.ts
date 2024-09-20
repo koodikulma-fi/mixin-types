@@ -324,20 +324,20 @@ type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Clas
  * ```
  * Extra notes:
  * - Note that in many cases with actual mixins, you can use `MixinsInstance` instead (inferring the types from the mixin functions).
- *      * Though, the functionality of AsInstance has nothing to do with mixins. Internally uses `AsClass`.
+ *      * Though, the functionality of `AsInstance` has nothing to do with mixins. Internally uses `AsClass`.
  * - The only reasons why you might need / want to use `AsInstance` are:
  *      1. To cut redefine the "constructor" to get rid of error about conflicting extends (for the interface).
  *          * Though if the interfaces to extend do not define "constructor", no problem in the first place.
  *      2. To help cut excessive deepness in certain use cases with matching class.
  *          * Especially related to using `this as MyThing` inside the class (to cut external generics away from `MyThing<Info>`).
  *          * However the deepness only appears with certain other prerequisites (such as using "constructor" in the interfaces to extend).
- *      3. As an instance based alternative to AsClass.
+ *      3. As an instance based alternative to `AsClass`.
  *          * That is, if you want to specifically define the constructor args (2nd arg), or the static side (3rd arg) of the class.
  *          * However, typescript reads constructor args from the `class` instead, so only helps when using the .constructor from the instance.
  *
  */
-type AsInstance<Instance extends Object, ConstructorArgs extends any[] = any[], ClassType = Instance["constructor"]> = Instance & {
-    ["constructor"]: AsClass<ClassType, Instance, ConstructorArgs>;
+type AsInstance<Instance extends Object, ConstructorArgs extends any[] = any[], Class = Instance["constructor"]> = Instance & {
+    ["constructor"]: AsClass<Class, Instance, ConstructorArgs>;
 };
 /** Type helper for classes extending mixins with generic parameters.
  * @param MixinInstance Should refer to the instance type of the mixin. To feed in class type use `AsMixinType`.

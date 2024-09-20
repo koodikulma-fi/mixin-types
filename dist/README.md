@@ -1,8 +1,6 @@
 
 ## TODO:
 - AsInstance... And teh special cases realted to this in usage..
-- Add to docs.. Don't use ["constructor"] type on mixins. It can lead to DEEPNESS + CONFLICTS upon extending interfaces.
-- Instead. Can use it on CLASSES. 
 
 ## WHAT
 
@@ -616,7 +614,39 @@ mySubClass.constructor.SOMETHING_STATIC; // number;
 
 ```
 
-### 8.3. Mixin TS helpers: `AsMixin<MixinInstance>`
+### 8.3. Mixin TS helpers: `AsInstance<Instance, ConstructorArgs?, Class?>`
+
+```typescript
+
+// - Arguments - //
+
+type AsInstance<
+    Instance extends Object, // The instance to re-instance.
+    // Optional args.
+    ConstructorArgs extends any[] = any[],
+    Class = Instance["constructor"]
+> = Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; }
+
+
+// - Example - //
+
+// As an alternative to this:
+interface MyThing<Info = {}> extends Test1, Test2<Info>, MyBase {}
+// You can do this:
+interface MyThing<Info = {}> extends AsInstance<Test1 & Test2<Info> & MyBase> {}
+
+
+```
+
+- Note that in many cases with actual mixins, you can use `MixinsInstance` instead (inferring the types from the mixin functions).
+     * Though, the functionality of `AsInstance` has nothing to do with mixins. Internally uses `AsClass`.
+- The only reasons why you might need / want to use `AsInstance` are:
+     1. To cut redefine the "constructor" to get rid of error about conflicting extends (for the interface).
+     2. To help cut excessive deepness in certain use cases with matching class.
+     3. As an instance based alternative to `AsClass` - although typescript won't read constructor args from the instance.
+
+
+### 8.4. Mixin TS helpers: `AsMixin<MixinInstance>`
 
 ```typescript
 
@@ -656,7 +686,7 @@ class MyMix2 extends (mixinMyTest as AsMixin<MyTest<MyInfo>>)(MyBase) { } // Get
 
 ```
 
-### 8.4. Mixin TS helpers: `ValidateMixins<Mixins, BaseClass?>`
+### 8.5. Mixin TS helpers: `ValidateMixins<Mixins, BaseClass?>`
 
 ```typescript
 
@@ -699,7 +729,7 @@ type EvalMixins7 = ValidateMixins<[Test1, Test2, (Base: ClassType) => ClassType 
 
 ```
 
-### 8.5. Mixin TS helpers: `MergeMixins<Mixins, ConstructorArgs?, Class?, Instance?>`
+### 8.6. Mixin TS helpers: `MergeMixins<Mixins, ConstructorArgs?, Class?, Instance?>`
 - Intersect mixins to a new clean class. The core method for the variants.
 - Note that if the mixins contain dependencies of other mixins, should type the dependencies fully to avoid unknown. See below.
 
@@ -817,7 +847,7 @@ type MyBaseMix = MergeMixinsWith<typeof MyBaseClass, MyTestsArray>;
 
 ```
 
-### 8.6. Mixin TS helpers: `MixinsInstanceWith<BaseClass, Mixins, ConstructorArgs?>`
+### 8.7. Mixin TS helpers: `MixinsInstanceWith<BaseClass, Mixins, ConstructorArgs?>`
 - Exactly like MergeMixinsWith (see its notes) but returns the instance type. Useful for creating a class interface.
 
 ```typescript
@@ -864,7 +894,7 @@ myClass.constructor.STATIC_ONE; // number
 
 ```
 
-### 8.7. Mixin TS funcs: `MixinsFunc<Mixins>` and `MixinsWithFunc<Base, Mixins>`
+### 8.8. Mixin TS funcs: `MixinsFunc<Mixins>` and `MixinsWithFunc<Base, Mixins>`
 - These are simply the types for the `mixins` and `mixinsWith` JS functions for reusing the same type logic.
 
 ```typescript
