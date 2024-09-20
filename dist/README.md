@@ -508,8 +508,8 @@ myMonster.settings; // any
             * `isInstanceOf(Class: BaseClassType, className: string): boolean { return Class.CLASS_NAMES.includes(className); }`.
 - It's also worth noting that the larger architectural decisions at the conceptual level have reverberations all the way down to these details.
     * For example, questions about using a complex tree of classes with inheritance vs. using a modular structure (-> and a smaller class tree).
-    * In a tree of classes you can use mixins as base building blocks (nor part of tree), whereas in a more modular structure you wouldn't really use mixins for the modules (or again, as base building blocks for them). This is because, mixins are essentially an alternative to (or an implementation of) modularity, although tied to class inheritance: anyway, you just pick your modules, like you pick your mixins.
-    * The point here is that, if you have a complex class tree structure, mixing in mixins is not necessarily going to solve the problems, but merely shift their form. That is, you get a new domain of tiny little problems here and there by introducing mixings to a clean class inheritance tree.
+    * In a tree of classes you should use mixins only as base building blocks (not part of class tree), whereas in a more modular structure you wouldn't really even need mixins for the modules (or again, as base building blocks for them). This is because, mixins are essentially an alternative to (or an implementation of) modularity, although tied to class inheritance: anyway, you just pick your modules, like you pick your mixins.
+    * The point here is that, if you have a complex class tree structure, mixing in mixins is not necessarily going to solve the problems, but merely shift their form. That is, you might get a new domain of little problems here and there by introducing mixings to a clean class inheritance tree.
 
 ---
 
