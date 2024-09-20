@@ -940,4 +940,6 @@ type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Clas
 
 ```
 
+---
+
 [Back to top](#what)
