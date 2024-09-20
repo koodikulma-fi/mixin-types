@@ -1,6 +1,10 @@
 /** Helper to create a mixed class from a sequence of mixins in ascending order: `[mixinTest1, mixinTest2, ...]`.
  * - The typeguard evaluates each mixin up to 20 individually (by mixin form and implied requirements), the rest is not evaluated.
  * - Note that in cases where mixins are dependent on each other and support type arguments, provide them for all in the chain.
+ * - Note that you should likely define constructor arguments by adding a constructor statement on the extending class.
+ *      * Alternatively could use `AsMixin`, `AsInstance` or `AsClass` to help with retyping the class with constructor args.
+ *      * By default `mixins` simply tries to read them from the last mixin, but that might not be correct (depending on the chain), nor as explicit as liked.
+ *
  * ```
  *
  * // - Actual JS implementation - //
@@ -123,6 +127,10 @@ declare function mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(..
 /** Helper to create a mixed class with a base class and a sequence of mixins in ascending order: `[Base, mixinTest1, mixinTest2, ...]`.
  * - The typeguard evaluates each mixin up to 20 individually (by mixin form and implied requirements), the rest is not evaluated.
  * - Note that in cases where mixins are dependent on each other and support type arguments, provide them for all in the chain, including the base class.
+ * - Note that you should likely define constructor arguments by adding a constructor statement on the extending class.
+ *      * Alternatively could use `AsMixin`, `AsInstance` or `AsClass` to help with retyping the class with constructor args.
+ *      * By default `mixinsWith` simply tries to read them from the last mixin, but that might not be correct (depending on the chain), nor as explicit as liked.
+ *
  * ```
  *
  * // - Actual JS implementation - //
@@ -228,7 +236,7 @@ declare function mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(..
  * // .. The interface must match the class (in name and type args), and holds the explicit typing.
  * // .. Note that if BaseBoy would also require a mixin would write: `extends MyBase, MyOtherMixin {`
  * export interface BaseBoy<BaseNames extends string = string> extends MyBase {
- *   testBase(baseName: BaseNames): boolean;
+ *     testBase(baseName: BaseNames): boolean;
  * }
  *
  * // Test.
@@ -237,12 +245,12 @@ declare function mixins<Mixins extends Array<(Base: ClassType) => ClassType>>(..
  *    public age: number = 0;
  * }
  * class MyBaseBoy extends addBaseBoy<MyNames, typeof MyCustomBase>(MyCustomBase) {
- *    test() {
- *        this.age = 10; // Recognized as `number`.
- *        this.name = "base"; // Recognized as `string`. Not typed further, as MyBase not designed to accept args.
- *        this.testBase("ball"); // Returns `false`. Only input options are "base" and "ball".
- *        this.testBase("base"); // Returns `true`. Only input options are "base" and "ball".
- *    }
+ *     test() {
+ *         this.age = 10; // Recognized as `number`.
+ *         this.name = "base"; // Recognized as `string`. Not typed further, as MyBase not designed to accept args.
+ *         this.testBase("ball"); // Returns `false`. Only input options are "base" and "ball".
+ *         this.testBase("base"); // Returns `true`. Only input options are "base" and "ball".
+ *     }
  * }
  * // Alternatively to automate reading type of MyBase.
  * class MyBaseBoy2 extends (addBaseBoy as AsMixin<BaseBoy<MyNames>>)(MyCustomBase) { }
@@ -301,35 +309,95 @@ type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Clas
         ["constructor"]: AsClass<Class, Instance, ConstructorArgs>;
     };
 };
+/** This type helps to redefine a class instance.
+ * - The core usage is for cases merging what an interface extends.
+ * - Typically, the interface matches a class (that extends `as any as ClassType`).
+ *
+ * ```
+ *
+ * // As an alternative to this:
+ * interface MyThing<Info = {}> extends Test1, Test2<Info>, MyBase {}
+ * // You can do this:
+ * interface MyThing<Info = {}> extends AsInstance<Test1 & Test2<Info> & MyBase> {}
+ *
+ *
+ * ```
+ * Extra notes:
+ * - Note that in many cases with actual mixins, you can use `MixinsInstance` instead (inferring the types from the mixin functions).
+ *      * Though, the functionality of AsInstance has nothing to do with mixins. Internally uses `AsClass`.
+ * - The only reasons why you might need / want to use `AsInstance` are:
+ *      1. To cut redefine the "constructor" to get rid of error about conflicting extends (for the interface).
+ *          * Though if the interfaces to extend do not define "constructor", no problem in the first place.
+ *      2. To help cut excessive deepness in certain use cases with matching class.
+ *          * Especially related to using `this as MyThing` inside the class (to cut external generics away from `MyThing<Info>`).
+ *          * However the deepness only appears with certain other prerequisites (such as using "constructor" in the interfaces to extend).
+ *      3. As an instance based alternative to AsClass.
+ *          * That is, if you want to specifically define the constructor args (2nd arg), or the static side (3rd arg) of the class.
+ *          * However, typescript reads constructor args from the `class` instead, so only helps when using the .constructor from the instance.
+ *
+ */
+type AsInstance<Instance extends Object, ConstructorArgs extends any[] = any[], ClassType = Instance["constructor"]> = Instance & {
+    ["constructor"]: AsClass<ClassType, Instance, ConstructorArgs>;
+};
 /** Type helper for classes extending mixins with generic parameters.
  * @param MixinInstance Should refer to the instance type of the mixin. To feed in class type use `AsMixinType`.
+ * @param ConstructorArgs Optionally define the constructor args explicitly.
+ *      * By default tries to read from mixins in case they use "constructor".
+ *          - On the other hand it's not recommended for mixins to use "constructor" for other reasons.
+ *      * Note also that the mixin chain should always define the constructor args for the resulting class explicitly.
  * @returns The returned type is a mixin creator, essentially: `(Base: TBase) => TBase & ClassType<MixinInstance>`.
  *
  * ```
+ *
  * // Let's first examine a simple mixin with generic params.
  * // .. It works fine, until things become more complex: you get problems with excessive deepness of types.
- * const addMyMixin_Simple = <Info = {}>(Base: Base) => class MyMixin extends Base {
- *      feedInfo(info: Info): void {}
+ * const mixinTest_Simple = <Info = {}>(Base: ClassType) => class Test extends Base {
+ *     feedInfo(info: Info): void {}
  * }
  *
  * // To provide a mixin base without problems of deepness we can do the following.
- * // .. Let's explicitly type what addMyMixin returns to help typescript.
- * interface MyMixin<Info = {}> { feedInfo(info: Info): void; }
- * const addMyMixin = <Info = {}, BaseClass extends ClassType = ClassType>(Base: BaseClass): ClassType<MyMixin<Info>> => class MyMixin extends Base {
- *      feedInfo(info: Info): void {}
+ * // .. Let's explicitly type what mixinTest returns to help typescript.
+ * interface Test<Info = {}> { feedInfo(info: Info): void; }
+ * const mixinTest = <Info = {}, BaseClass extends ClassType = ClassType>(Base: BaseClass): ClassType<Test<Info>> => class Test extends Base {
+ *     feedInfo(info: Info): void {}
  * }
+ *
+ * // Custom base.
+ * class MyBase { someMember: number = 0; }
  *
  * // The annoyance with above is that we lose automated typing of the BaseClass.
  * // .. AsMixin simply provides a way to automate the typing of the base class.
+ * // .. Note that you can also optionally define the constructor arguments using the 2nd type arg.
  * type MyInfo = { something: boolean; };
- * class MyMix_1 extends addMyMixin<MyInfo, typeof MyBase>(MyBase) { } // Needs to specify the base type explicitly here.
- * class MyMix_2 extends (addMyMixin as AsMixin<MyMixin<MyInfo>>)(MyBase) { } // Get MyBase type dynamically.
+ * class MyMix_1 extends mixinTest<MyInfo, typeof MyBase>(MyBase) { } // Needs to specify the base type explicitly here.
+ * class MyMix_2 extends (mixinTest as AsMixin<Test<MyInfo>>)(MyBase) { } // Get MyBase type dynamically.
+ *
+ * // The feature becomes more useful when typing a longer sequence.
+ * // .. Define another mixin with explicit interface.
+ * interface Test2<Data extends Record<string, any> = {}> { data: Data; }
+ * const mixinTest2 = <Data extends Record<string, any> = {}>(Base: ClassType) => class extends Base {
+ *     data: Data;
+ *     constructor(...args: any[]) {
+ *         super(...args.slice(1));
+ *         this.data = args[0];
+ *     }
+ * }
+ * // .. Define class.
+ * type MyData = { name: string; }
+ * class MyMultiMix extends
+ *     (mixinTest2 as AsMixin<Test2<MyData>, [data: MyData]>)( // Define constr. args here.
+ *         (mixinTest as AsMixin<Test<MyInfo>>)(MyBase)) {}
+ *
+ * // .. Test.
+ * const myMultiMix = new MyMultiMix({ name: "me" }); // Requires `MyData`.
+ * myMultiMix.someMember = 5; // Requires `number`.
+ * myMultiMix.feedInfo({ something: false }); // Requires `MyInfo`.
  *
  * ```
  *
  */
-type AsMixin<MixinInstance extends Object> = <TBase extends ClassType>(Base: TBase) => Omit<TBase, "new"> & {
-    new (...args: GetConstructorArgs<MixinInstance["constructor"]>): GetConstructorReturn<TBase> & MixinInstance;
+type AsMixin<MixinInstance extends Object, ConstructorArgs extends any[] = MixinInstance["constructor"] extends new (...args: any[]) => any ? GetConstructorArgs<MixinInstance["constructor"]> : any[]> = <TBase extends ClassType>(Base: TBase) => Omit<TBase, "new"> & {
+    new (...args: ConstructorArgs): GetConstructorReturn<TBase> & MixinInstance;
 };
 /** Evaluate a chain of mixins.
  * - Returns back an array with the respective mixins or supplements with `never` for each failed item.
@@ -414,4 +482,4 @@ type MixinsFunc = <Mixins extends Array<(Base: ClassType) => ClassType>>(...mixi
 /** The type for the `mixinsWith` function, including evaluating the sequence and returning combined class type. */
 type MixinsWithFunc = <Base extends ClassType, Mixins extends Array<(Base: ClassType) => ClassType>>(Base: Base, ...mixins: ValidateMixins<Mixins, Base>) => MergeMixinsWith<Base, Mixins>;
 
-export { AsClass, AsMixin, ClassType, GetConstructorArgs, GetConstructorReturn, IncludesValue, IterateBackwards, IterateForwards, MergeMixins, MergeMixinsWith, MixinsFunc, MixinsInstance, MixinsInstanceWith, MixinsWithFunc, ValidateMixins, mixins, mixinsWith };
+export { AsClass, AsInstance, AsMixin, ClassType, GetConstructorArgs, GetConstructorReturn, IncludesValue, IterateBackwards, IterateForwards, MergeMixins, MergeMixinsWith, MixinsFunc, MixinsInstance, MixinsInstanceWith, MixinsWithFunc, ValidateMixins, mixins, mixinsWith };

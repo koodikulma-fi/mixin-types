@@ -1,4 +1,9 @@
 
+## TODO:
+- AsInstance... And teh special cases realted to this in usage..
+- Add to docs.. Don't use ["constructor"] type on mixins. It can lead to DEEPNESS + CONFLICTS upon extending interfaces.
+- Instead. Can use it on CLASSES. 
+
 ## WHAT
 
 `mixin-types` is a tiny library providing typing tools for mixin classes and 2 simple JS funcs (`mixins` and `mixinsWith`).
@@ -241,8 +246,8 @@ export class SignalBoy<Signals extends SignalsRecord = {}> extends _mixinSignalB
 
 // Let's declare the interface with explicit typing.
 export interface SignalBoy<Signals extends SignalsRecord = {}> {
-    // Optionally further define the static side, for extra external fluency.
-    ["constructor"]: SignalBoyType<Signals>;
+    // // It's not recommended to type the "constructor" for mixins - only on final classes.
+    // ["constructor"]: SignalBoyType<Signals>; // Link to the static side.
     // Members.
     signals: Record<string, Array<(...args: any[]) => void>>;
     // Let's define the typed methods here.
@@ -432,7 +437,8 @@ interface DataManType<Data = {}, Settings = {}> extends
     // Alt. args: `{} extends Data ? [Data?, Settings?, ...any[]] : [Data, Settings?, ...any[]]`
     ClassType<DataMan<Data, Settings>, [data: Data, settings: Settings, ...args: any[]]> {}
 interface DataMan<Data = {}, Settings = {}> {
-    ["constructor"]: DataManType<Data, Settings>; // Link to the static side.
+    // // It's not recommended to type the "constructor" for mixins - only on final classes.
+    // ["constructor"]: DataManType<Data, Settings>; // Link to the static side.
     data: Data;
     settings: Settings;
 }
