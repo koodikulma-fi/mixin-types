@@ -589,7 +589,9 @@ type AsClass<
     Instance, // Should refer to the type of the merged class instance.
     // Optional. Can be used to define type constructor arguments for the resulting class.
     ConstructorArgs extends any[] = any[]
-> = new (...args: ConstructorArgs): Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; };
+> = Omit<Class, "new"> & {
+    new (...args: ConstructorArgs): Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; };
+};
 
 
 // - Example - //
