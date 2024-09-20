@@ -11,7 +11,7 @@ The documentation below explains how to set up and use mixins in various circums
 3. [Passing generic params (simple cases)](#3-passing-generic-parameters-simple-cases)
 4. [Complex mixins and generic parameters](#4-complex-mixins-and-generic-parameters)
 5. [Constructor arguments](#5-constructor-arguments)
-6. [Using `instanceof`](#6-using-instanceof-with-mixins)
+6. [Limits of `instanceof`](#6-limits-of-instanceof-with-mixins)
 7. [JavaScript implementations](#7-javascript-implementations)
 8. [TypeScript tools](#8-typescript-tools)
 9. [Shortcut - 2 simple types to solve it all](#9-shortcut---2-simple-types-to-solve-it-all)
@@ -493,22 +493,22 @@ myMonster.settings; // any
 
 ---
 
-## 6. USING `instanceof` WITH MIXINS
-- The reason why `instanceof` doesn't work the way you might initially expect.
-    * As each mixin sequence produces a unique class, you cannot check mixin base classes using `instanceof`.
-    * In fact, you don't even have a reference to them (unless you have a separate class prepared).
-    * This is a core limitation of mixins when implemented as extensions to native classes.
+## 6. LIMITS OF `instanceof` WITH MIXINS
+- The usage of `instanceof` is very limited with mixins as mixins always produce a new class.
+    * That is, you can't know which mixins a class extends using `instanceof`, since each extended mixin class was dynamically created.
+    * However, the final class itself is compatible with `instanceof` perfectly well - in case you have other classes extending it.
 - Examples of working around.
-    * #1: Use mixins only as building blocks to compose the "main classes" and use `instanceof` for them.
-    * #2: Manual implementation.
+    * #1: Use mixins only as building blocks to compose the "main classes" (which form a clean tree) and use `instanceof` only for them.
+        - If you want to use mixins on your main class tree, it will necessarily complicate using `instanceof` -> approach #2.
+    * #2: Manual implementation. For example:
         - Add `static CLASS_NAMES: string[]` member that is required for all mixins (and classes) in your system. Let's call it `BaseClassType`.
-        - Each time a mixin extends a class, it should add to its CLASS_NAMES its unique mixin (class) name.
+        - Each time a mixin extends a class, it should add its unique mixin (class) name to its static CLASS_NAMES member.
             * Likewise classes would add them on the static side: `static CLASS_NAMES = [...MyBaseClass.CLASS_NAMES, "MyClass"]`.
         - Finally, you'd have a custom function for checking inheritance:
             * `isInstanceOf(Class: BaseClassType, className: string): boolean { return Class.CLASS_NAMES.includes(className); }`.
 - It's also worth noting that the larger architectural choices at the conceptual level have reverberations all the way down to these details.
-    * For example, questions about using a complex tree of classes with inheritance vs. using a modular structure.
-    * In a tree of classes you might use mixins as base building blocks (nor part of the tree), whereas in a more modular structure you wouldn't really use mixins at all for the modules (or again, as base building blocks for modules). This is because, mixins are essentially an alternative (or an implementation) of modularity, although tied to class inheritance: anyway, you just pick your modules, like you pick your mixins.
+    * For example, questions about using a complex tree of classes with inheritance vs. using a modular structure (-> and a smaller class tree).
+    * In a tree of classes you can use mixins as base building blocks (nor part of tree), whereas in a more modular structure you wouldn't really use mixins for the modules (or again, as base building blocks for them). This is because, mixins are essentially an alternative to (or an implementation of) modularity, although tied to class inheritance: anyway, you just pick your modules, like you pick your mixins.
     * The point here is that, if you have a complex class tree structure, mixing in mixins is not necessarily going to solve the problems, but merely shift their form. That is, you get a new domain of tiny little problems here and there by introducing mixings to a clean class inheritance tree.
 
 ---
