@@ -304,10 +304,12 @@ type GetConstructorReturn<T> = T extends new (...args: any[]) => infer U ? U : n
  * @param Class Type of the merged class type. (Should extend ClassType, not required for fluency.)
  * @param Instance Type of the merged class instance. (Should extend Object, not required for fluency.)
  * @param ConstructorArgs Constructor arguments of the new class. Defaults to any[].
+ * @param LinkConstructor Defaults to true. If true, adds recursive static side ref to the instance side: `{ ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; }`.
  * @returns The returned type is a new class type, with recursive class <-> instance support.
  */
-type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Class, "new"> & {
-    new (...args: ConstructorArgs): Instance & {
+type AsClass<Class, Instance, ConstructorArgs extends any[] = any[], LinkConstructor extends boolean = true> = Omit<Class, "new"> & {
+    new (...args: ConstructorArgs): LinkConstructor extends false ? Instance : // No link.
+    Instance & {
         ["constructor"]: AsClass<Class, Instance, ConstructorArgs>;
     };
 };

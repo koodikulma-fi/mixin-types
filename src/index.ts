@@ -339,13 +339,17 @@ export type GetConstructorReturn<T> = T extends new (...args: any[]) => infer U 
  * @param Class Type of the merged class type. (Should extend ClassType, not required for fluency.)
  * @param Instance Type of the merged class instance. (Should extend Object, not required for fluency.)
  * @param ConstructorArgs Constructor arguments of the new class. Defaults to any[].
+ * @param LinkConstructor Defaults to true. If true, adds recursive static side ref to the instance side: `{ ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; }`.
  * @returns The returned type is a new class type, with recursive class <-> instance support.
  */
-export type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Class, "new"> & {
+export type AsClass<Class, Instance, ConstructorArgs extends any[] = any[], LinkConstructor extends boolean = true> = Omit<Class, "new"> & {
     // Note. We can't use Omit<Instance, "constructor"> below as it would turn class methods to property functions.
     // .. However, the same thing does not seem to bother TypeScript on the static side, so we _can_ use Omit<class, "new"> above.
     // .. Note also that the ["constructor"] part is optional: it provides a typed link to the static side and back recursively.
-    new (...args: ConstructorArgs): Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; };
+    new (...args: ConstructorArgs): LinkConstructor extends false ?
+        Instance : // No link.
+        Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; // Linked.
+    };
 };
 /** This type helps to redefine a class instance.
  * - The core usage is for cases merging what an interface extends.

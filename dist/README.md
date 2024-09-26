@@ -582,7 +582,7 @@ type InstanceTypeFrom<Anything, Fallback = {}> = Anything extends abstract new (
 
 ```
 
-### 8.2. Mixin TS helpers: `AsClass<Class, Instance, ConstructorArgs?>`
+### 8.2. Mixin TS helpers: `AsClass<Class, Instance, ConstructorArgs?, LinkConstructor?>`
 
 ```typescript
 
@@ -591,10 +591,14 @@ type InstanceTypeFrom<Anything, Fallback = {}> = Anything extends abstract new (
 type AsClass<
     Class, // Should refer to the type of the merged class type. For fluency type is any.
     Instance, // Should refer to the type of the merged class instance.
-    // Optional. Can be used to define type constructor arguments for the resulting class.
-    ConstructorArgs extends any[] = any[]
+    // Optional.
+    ConstructorArgs extends any[] = any[], // Define constructor args for the resulting class.
+    LinkConstructor extends boolean = true // Set false to not add constructor link.
 > = Omit<Class, "new"> & {
-    new (...args: ConstructorArgs): Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; };
+    new (...args: ConstructorArgs): LinkConstructor extends false ?
+        Instance : // No link.
+        Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; // Linked.
+    };
 };
 
 
@@ -934,11 +938,20 @@ type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
  * @param Class Type of the merged class type. (Optionally extends ClassType.)
  * @param Instance Type of the merged class instance. (Optionally extends Object.)
  * @param ConstructorArgs Constructor arguments of the new class. Defaults to any[].
+ * @param LinkConstructor Defaults to true. Adds recursive static side ref to the instance side with "constructor".
  * @returns The returned type is a new class type, with recursive class <-> instance support.
  */
-type AsClass<Class, Instance, ConstructorArgs extends any[] = any[]> = Omit<Class, "new"> & {
+type AsClass<
+    Class,
+    Instance,
+    ConstructorArgs extends any[] = any[],
+    LinkConstructor extends boolean = true
+> = Omit<Class, "new"> & {
     // The ["constructor"] part is optional, but provides a typed link to the static side and back recursively.
-    new (...args: ConstructorArgs): Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; };
+    new (...args: ConstructorArgs): LinkConstructor extends false ?
+        Instance : // No link.
+        Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; // Linked.
+    };
 };
 
 ```
