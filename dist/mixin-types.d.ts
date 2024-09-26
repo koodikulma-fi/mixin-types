@@ -271,6 +271,8 @@ type IterateBackwards = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
  * - When used, should not input negative, but go up from 0 until `Arr["length"]`.
  */
 type IterateForwards = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...never[]];
+/** Just like InstanceType, but checks whether fits or not. If doesn't fit, returns Fallback, which defaults to {}. */
+type InstanceTypeFrom<Anything, Fallback = {}> = Anything extends abstract new (...args: any[]) => infer Instance ? Instance : Fallback;
 /** Get the type for class from class instance - the opposite of `InstanceType`. Optionally define constructor args. */
 type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
 /** Get the type for class constructor arguments. */
@@ -497,4 +499,4 @@ type MixinsFunc = <Mixins extends Array<(Base: ClassType) => ClassType>>(...mixi
 /** The type for the `mixinsWith` function, including evaluating the sequence and returning combined class type. */
 type MixinsWithFunc = <Base extends ClassType, Mixins extends Array<(Base: ClassType) => ClassType>>(Base: Base, ...mixins: ValidateMixins<Mixins, Base>) => MergeMixinsWith<Base, Mixins>;
 
-export { AsClass, AsInstance, AsMixin, ClassType, GetConstructorArgs, GetConstructorReturn, IncludesValue, IterateBackwards, IterateForwards, MergeMixins, MergeMixinsWith, MixinsFunc, MixinsInstance, MixinsInstanceWith, MixinsWithFunc, ValidateMixins, mixins, mixinsWith };
+export { AsClass, AsInstance, AsMixin, ClassType, GetConstructorArgs, GetConstructorReturn, IncludesValue, InstanceTypeFrom, IterateBackwards, IterateForwards, MergeMixins, MergeMixinsWith, MixinsFunc, MixinsInstance, MixinsInstanceWith, MixinsWithFunc, ValidateMixins, mixins, mixinsWith };

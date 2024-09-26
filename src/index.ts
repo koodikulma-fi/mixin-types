@@ -304,6 +304,8 @@ export type IterateBackwards = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
 export type IterateForwards = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...never[]];
 
 // Class tools.
+/** Just like InstanceType, but checks whether fits or not. If doesn't fit, returns Fallback, which defaults to {}. */
+export type InstanceTypeFrom<Anything, Fallback = {}> = Anything extends abstract new (...args: any[]) => infer Instance ? Instance : Fallback;
 /** Get the type for class from class instance - the opposite of `InstanceType`. Optionally define constructor args. */
 export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
 /** Get the type for class constructor arguments. */

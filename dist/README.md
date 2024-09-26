@@ -576,6 +576,9 @@ type GetConstructorArgs<T> = T extends new (...args: infer U) => any ? U : never
 type GetConstructorReturn<T> = T extends new (...args: any[]) => infer U ? U : never;
 /** Get the type for class from class instance - the opposite of `InstanceType`. Optionally define constructor args. */
 type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
+/** Just like InstanceType, but checks whether fits or not. If doesn't fit, returns Fallback, which defaults to {}. */
+type InstanceTypeFrom<Anything, Fallback = {}> = Anything extends abstract new (...args: any[]) => infer Instance ? Instance : Fallback;
+
 
 ```
 
