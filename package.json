@@ -51,6 +51,6 @@
     "rollup-plugin-delete": "^2.0.0",
     "rollup-plugin-dts": "^4.2.2",
     "rollup-plugin-terser": "^7.0.2",
-    "typescript": "4.9"
+    "typescript": "^4.9"
   }
 }
