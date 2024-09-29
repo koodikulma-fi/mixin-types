@@ -241,7 +241,7 @@ export class SignalBoy<Signals extends SignalsRecord = {}> extends _mixinSignalB
 
 // Let's declare the interface with explicit typing.
 export interface SignalBoy<Signals extends SignalsRecord = {}> {
-    // // It's not recommended to type the "constructor" for mixins - only on final classes.
+    // // It's not recommended to type the "constructor" for mixins - only for final classes (or not at all).
     // ["constructor"]: SignalBoyType<Signals>; // Link to the static side.
     // Members.
     signals: Record<string, Array<(...args: any[]) => void>>;
