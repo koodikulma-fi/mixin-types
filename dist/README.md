@@ -10,11 +10,11 @@ The documentation below explains how to set up and use mixins in various circums
 2. [Simple mixins](#2-simple-mixins)
 3. [Passing generic params (simple cases)](#3-passing-generic-parameters-simple-cases)
 4. [Complex mixins and generic parameters](#4-complex-mixins-and-generic-parameters)
-5. [Constructor arguments](#5-constructor-arguments)
-6. [Limits of `instanceof`](#6-limits-of-instanceof-with-mixins)
-7. [JavaScript implementations](#7-javascript-implementations)
-8. [TypeScript tools](#8-typescript-tools)
-9. [Shortcut - 2 simple types to solve it all](#9-shortcut---2-simple-types-to-solve-it-all)
+5. [Static side typing](#5-static-side-typing)
+6. [Constructor arguments](#6-constructor-arguments)
+7. [Limits of `instanceof`](#7-limits-of-instanceof-with-mixins)
+8. [JavaScript implementations](#8-javascript-implementations)
+9. [TypeScript tools](#9-typescript-tools)
 
 ---
 
@@ -402,9 +402,70 @@ myMix.constructor.DEFAULT_TIMEOUT; // number | null
 
 ---
 
-## 5. CONSTRUCTOR ARGUMENTS
+## 5. STATIC SIDE TYPING
+- However, the convenient pattern `as any as ClassType` above loses the static side typing.
+- Luckily, this is easy to fix (in various degrees) with a simple trick - easiest done with `ReClass`.
+- The following example illustrates the problem and how to overcome it.
 
-### 5.1. Rules of thumb
+```typescript
+
+// Let's say we have a complex mixin - meaning we've detached its return and inner side types.
+function mixinMyThing<Info = {}, Base extends ClassType = ClassType>(Base: Base): MyThingType<Info> {
+    return class MyThing extends (Base as ClassType) { // We're detached.
+        // Let's declare an instanced and a static method. (Could be members, too - no diff.)
+        feedInfo(info: Info): void {}
+        static feedStatically(info: Info): void {}
+    } as any; // We're detached.
+}
+
+// And we want to define the static and instance side interfaces for it.
+interface MyThingType<Info = {}> extends ClassType<MyThing<Info>, [enabled: boolean]> {
+    feedStatically(info: Info): void;
+}
+interface MyThing<Info = {}> {
+    feedInfo(info: Info): void;
+}
+
+// Finally, we want to declare a class for it. (The same works for extending layers.)
+// .. Let's try it in a couple of different ways.
+
+// 1. Using `as any as ClassType` is fine, except we lose the static side typing.
+class MyThing<Info = {}> extends (mixinMyThing(Object) as any as ClassType) {}
+MyThing.feedStatically({})      // Doesn't exist.
+
+// 2. What about if we add or use `MyThingType` - no, we cannot, cyclical reference.
+class MyThing<Info = {}> extends (mixinMyThing(Object) as any as MyThingType) {}
+
+// 3. So let's cut the cyclicity using `PickAll` type.
+class MyThing<Info = {}> extends (mixinMyThing(Object) as any as ClassType & PickAll<MyThingType>) {}
+MyThing.feedStatically({})      // Exists.
+const myThing = new MyThing();  // Is allowed, but shouldn't be without (enabled: boolean).
+
+// 4. Let's make it all work with `ReClass` type.
+// .. Note that we need to give the 2nd arg {} to drop the automatic instance reading.
+// .. However, we do not drop the automated constructor args reading (3rd arg is not given).
+class MyThing<Info = {}> extends (mixinMyThing(Object) as any as ReClass<MyThingType, {}>) {}
+MyThing.feedStatically({})          // Exists.
+const myThing = new MyThing();      // Not allowed - correct.
+const okThing = new MyThing(true);  // Allowed - correct.
+
+// +  One final thing - the generics.
+// .. They work on the instance side, but cannot be typed to the static side this way.
+const thing = new MyThing<number>(true);
+thing.feedInfo(5);                // Ok.
+MyThing.feedStatically({});       // Should not be allowed.
+// .. Of course, you hardly ever need generics on the static methods & members.
+// .. But in anycase, if you do want to do it, use this trick instead.
+(MyThing as MyThingType<number>).feedStatically({});  // Not allowed - correct.
+(MyThing as MyThingType<number>).feedStatically(5);   // Allowed - correct.
+
+```
+
+---
+
+## 6. CONSTRUCTOR ARGUMENTS
+
+### 6.1. Rules of thumb
 - Generally speaking, you should prefer _not_ using constructor arguments in mixins.
     * When needed, keep them simple, and use fixed number of arguments (eg. not 1-3 args, but eg. 2).
         - Or alternatively, in certain cases, consider using the _same_ constructor arg(s) for all mixins.
@@ -417,11 +478,11 @@ myMix.constructor.DEFAULT_TIMEOUT; // number | null
         - Well, actually TS wants `(...args: any[])`, since:  _A mixin class must have a constructor with a single rest parameter of type 'any[]'._
         - But we can work around it by a simple trick of `extends (Base as ClassType)` - see below.
 
-### 5.2. Why cannot the arguments be automated?
+### 6.2. Why cannot the arguments be automated?
 - The simple answer is that it's _not known how mixins use the constructor args_.
 - The below example demonstrations this point while showcasing how to use constructor arguments.
 
-### 5.3. Using constructor args
+### 6.3. Using constructor args
 
 ```typescript
 
@@ -494,7 +555,7 @@ myMonster.settings; // any
 
 ---
 
-## 6. LIMITS OF `instanceof` WITH MIXINS
+## 7. LIMITS OF `instanceof` WITH MIXINS
 - The usage of `instanceof` is very limited with mixins as mixins always produce a new class.
     * That is, you can't use `instanceof` to check for mixin bases, since each mixin class was dynamically created.
     * However, the final class is compatible with `instanceof` - in case you have other classes extending it.
@@ -514,11 +575,11 @@ myMonster.settings; // any
 
 ---
 
-## 7. JAVASCRIPT IMPLEMENTATIONS
+## 8. JAVASCRIPT IMPLEMENTATIONS
 
 - For usage, see [simple mixins](#2-simple-mixins) and [passing generic params](#3-passing-generic-parameters-simple-cases) above.
 
-### 7.1. `mixins`
+### 8.1. `mixins`
 
 ```typescript
 
@@ -531,7 +592,7 @@ export function mixins(...mixins) {
 
 ```
 
-### 7.2. `mixinsWith`
+### 8.2. `mixinsWith`
 
 ```typescript
 
@@ -546,12 +607,12 @@ export function mixinsWith(Base, ...mixins) {
 
 ---
 
-## 8. TYPESCRIPT TOOLS
+## 9. TYPESCRIPT TOOLS
 
 - As is obvious from the implementations of `mixins` and `mixinsWith`, the JS side of mixins is trivial.
 - The magic happens on the TS side, and sometimes you might need to use the TS tools specifically.
 
-### 8.1. Simple TS helpers
+### 9.1. Simple TS helpers
 
 ```typescript
 
@@ -579,27 +640,24 @@ type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
 /** Just like InstanceType, but checks whether fits or not. If doesn't fit, returns Fallback, which defaults to {}. */
 type InstanceTypeFrom<Anything, Fallback = {}> = Anything extends abstract new (...args: any[]) => infer Instance ? Instance : Fallback;
 
+// General helpers.
+/** Simply creates a new type object by picking all properties. Useful for typing static side when extending mixins. */
+type PickAll<T> = Pick<T, keyof T>;
 
 ```
 
-### 8.2. Mixin TS helpers: `AsClass<Class, Instance, ConstructorArgs?, LinkConstructor?>`
+### 9.2. Mixin TS helpers: `ReClass<Class, Instance?, ConstructorArgs?>`
 
 ```typescript
 
 // - Arguments - //
 
-type AsClass<
-    Class, // Should refer to the type of the merged class type. For fluency type is any.
-    Instance, // Should refer to the type of the merged class instance.
+type ReClass<
+    Class, // The original static class type whose methods and properties are copied.
     // Optional.
-    ConstructorArgs extends any[] = any[], // Define constructor args for the resulting class.
-    LinkConstructor extends boolean = true // Set false to not add constructor link.
-> = Omit<Class, "new"> & {
-    new (...args: ConstructorArgs): LinkConstructor extends false ?
-        Instance : // No link.
-        Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; // Linked.
-    };
-};
+    Instance = InstanceTypeFrom<Class>, // The instance is inferred by default.
+    ConstructorArgs extends any[] = GetConstructorArgs<Class, any[]>, // Inferred, too.
+> = Pick<Class, keyof Class> & (new (...args: ConstructorArgs) => Instance);
 
 
 // - Example - //
@@ -621,7 +679,66 @@ mySubClass.constructor.SOMETHING_STATIC; // number;
 
 ```
 
-### 8.3. Mixin TS helpers: `AsInstance<Instance, Class?, ConstructorArgs?>`
+### 9.3. Mixin TS helpers: `AsClass<Class, Instance, ConstructorArgs?, LinkConstructor?>`
+
+```typescript
+
+// - Arguments - //
+
+type AsClass<
+    Class, // Should refer to the type of the merged class type. For fluency type is any.
+    Instance, // Should refer to the type of the merged class instance.
+    // Optional.
+    ConstructorArgs extends any[] = any[], // Define constructor args for the resulting class.
+    LinkConstructor extends boolean = true // Set false to not add constructor link.
+> = Omit<Class, "new"> & {
+    new (...args: ConstructorArgs): LinkConstructor extends false ?
+        Instance : // No link.
+        Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; // Linked.
+    };
+};
+
+
+// - Example - //
+
+// Let's say we have a complex mixin.
+// .. Complex so that we need to use `as any as ClassType` pattern further below.
+const mixinMyThing = <Info = {}, Base extends ClassType = ClassType>(Base: Base) => {
+    return class MyThing extends (Base as ClassType) { // We're complex and detached.
+        info?: Info;
+        static staticInfo?: Info;
+    } as any; // We're complex and detached.
+}
+
+// And we want to define the static and instance side interfaces for it.
+interface MyThingType<Info = {}> extends ClassType<MyThing<Info>, [enabled: boolean]> {
+    staticInfo?: Info;
+}
+interface MyThing<Info = {}> {
+    info?: Info;
+}
+
+// Let's define a class extending mixinMyThing.
+// .. Because mixinMyThing is complex, we use the interface + class declaration double.
+// .. The simpler `as any as ClassType` wouldn't be enough as it cuts out the static side typing.
+class MyThing<Info = {}> extends (mixinMyThing(Object) as any as ReClass<MyThingType, {}>) {}
+MyThing.staticInfo                  // Exists.
+const myThing = new MyThing();      // Not allowed - correct.
+const okThing = new MyThing(true);  // Allowed - correct.
+
+// About the generics.
+// .. They work on the instance side, but cannot be typed to the static side this way.
+const thing = new MyThing<number>(true);
+thing.info = 12;                    // Ok.
+MyThing.staticInfo = {};            // Should not be allowed.
+
+// If needing to use generics on the static side, use this trick. 
+(MyThing as MyThingType<number>).staticInfo = {};   // Not allowed - correct.
+(MyThing as MyThingType<number>).staticInfo = 12;   // Allowed - correct.
+
+```
+
+### 9.4. Mixin TS helpers: `AsInstance<Instance, Class?, ConstructorArgs?>`
 
 ```typescript
 
@@ -653,7 +770,7 @@ interface MyThing<Info = {}> extends AsInstance<Test1 & Test2<Info> & MyBase> {}
      3. As an instance based alternative to `AsClass` - although typescript won't read constructor args from the instance.
 
 
-### 8.4. Mixin TS helpers: `AsMixin<MixinInstance>`
+### 9.5. Mixin TS helpers: `AsMixin<MixinInstance>`
 
 ```typescript
 
@@ -693,7 +810,7 @@ class MyMix2 extends (mixinMyTest as AsMixin<MyTest<MyInfo>>)(MyBase) { } // Get
 
 ```
 
-### 8.5. Mixin TS helpers: `ValidateMixins<Mixins, BaseClass?>`
+### 9.6. Mixin TS helpers: `ValidateMixins<Mixins, BaseClass?>`
 
 ```typescript
 
@@ -736,7 +853,7 @@ type EvalMixins7 = ValidateMixins<[Test1, Test2, (Base: ClassType) => ClassType 
 
 ```
 
-### 8.6. Mixin TS helpers: `MergeMixins<Mixins, ConstructorArgs?, Class?, Instance?>`
+### 9.7. Mixin TS helpers: `MergeMixins<Mixins, ConstructorArgs?, Class?, Instance?>`
 - Intersect mixins to a new clean class. The core method for the variants.
 - Note that if the mixins contain dependencies of other mixins, should type the dependencies fully to avoid unknown. See below.
 
@@ -854,7 +971,7 @@ type MyBaseMix = MergeMixinsWith<typeof MyBaseClass, MyTestsArray>;
 
 ```
 
-### 8.7. Mixin TS helpers: `MixinsInstanceWith<BaseClass, Mixins, ConstructorArgs?>`
+### 9.7. Mixin TS helpers: `MixinsInstanceWith<BaseClass, Mixins, ConstructorArgs?>`
 - Exactly like MergeMixinsWith (see its notes) but returns the instance type. Useful for creating a class interface.
 
 ```typescript
@@ -901,7 +1018,7 @@ myClass.constructor.STATIC_ONE; // number
 
 ```
 
-### 8.8. Mixin TS funcs: `MixinsFunc<Mixins>` and `MixinsWithFunc<Base, Mixins>`
+### 9.8. Mixin TS funcs: `MixinsFunc<Mixins>` and `MixinsWithFunc<Base, Mixins>`
 - These are simply the types for the `mixins` and `mixinsWith` JS functions for reusing the same type logic.
 
 ```typescript
@@ -919,40 +1036,6 @@ type MixinsWithFunc = <
     Mixins extends Array<(Base: ClassType) => ClassType>
 >(Base: Base, ...mixins: ValidateMixins<Mixins, Base>) => MergeMixinsWith<Base, Mixins>;
 
-
-```
-
----
-
-## 9. SHORTCUT - 2 SIMPLE TYPES TO SOLVE IT ALL
-- In simple cases, you might just need two very simple types from the library: `ClassType` and `AsClass`.
-- In case they are all you need, you might just as well copy them to your types, as they are very simple.
-
-```typescript
-
-/** Get class type from class instance type with optional constr. args. The opposite of `InstanceType`. */
-type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
-
-/** Re-type class.
- * Parameters and return:
- * @param Class Type of the merged class type. (Optionally extends ClassType.)
- * @param Instance Type of the merged class instance. (Optionally extends Object.)
- * @param ConstructorArgs Constructor arguments of the new class. Defaults to any[].
- * @param LinkConstructor Defaults to true. Adds recursive static side ref to the instance side with "constructor".
- * @returns The returned type is a new class type, with recursive class <-> instance support.
- */
-type AsClass<
-    Class,
-    Instance,
-    ConstructorArgs extends any[] = any[],
-    LinkConstructor extends boolean = true
-> = Omit<Class, "new"> & {
-    // The ["constructor"] part is optional, but provides a typed link to the static side and back recursively.
-    new (...args: ConstructorArgs): LinkConstructor extends false ?
-        Instance : // No link.
-        Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; // Linked.
-    };
-};
 
 ```
 

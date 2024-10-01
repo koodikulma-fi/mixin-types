@@ -309,11 +309,75 @@ export type InstanceTypeFrom<Anything, Fallback = {}> = Anything extends abstrac
 /** Get the type for class from class instance - the opposite of `InstanceType`. Optionally define constructor args. */
 export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
 /** Get the type for class constructor arguments. */
-export type GetConstructorArgs<T> = T extends new (...args: infer U) => any ? U : never;
+export type GetConstructorArgs<T, Fallback = never> = T extends new (...args: infer U) => any ? U : Fallback;
 /** Get the type for class constructor return. */
-export type GetConstructorReturn<T> = T extends new (...args: any[]) => infer U ? U : never;
+export type GetConstructorReturn<T, Fallback = never> = T extends new (...args: any[]) => infer U ? U : Fallback;
 
 // Re-type class.
+/** Simply creates a new type object by picking all properties. Useful for typing static side when extending mixins, as Pick drops the `new () => Instance` part automatically - see more in `ReClass` comments. */
+export type PickAll<T> = Pick<T, keyof T>;
+/** Uses the concept from PickAll to re-create the class type.
+ * - By default infers Instance from Class, and the same for ConstructorArgs.
+ * - The pattern is useful when extending mixins to add typing for the static side.
+ *      * Note that the PickAll trick only works for static side, on the instance side it would turn methods into property functions.
+ *      * But on the static side, all are as if property functions already - so TS won't give any problems about it.
+ * 
+ * ```
+ *
+ * // Let's say we have a complex mixin - meaning we've detached its return and inner side types.
+ * function mixinMyThing<Info = {}, Base extends ClassType = ClassType>(Base: Base): MyThingType<Info> {
+ *     return class MyThing extends (Base as ClassType) { // We're detached.
+ *         // Let's declare an instanced and a static method. (Could be members, too - no diff.)
+ *         feedInfo(info: Info): void {}
+ *         static feedStatically(info: Info): void {}
+ *     } as any; // We're detached.
+ * }
+ * 
+ * // And we want to define the static and instance side interfaces for it.
+ * interface MyThingType<Info = {}> extends ClassType<MyThing<Info>, [enabled: boolean]> {
+ *     feedStatically(info: Info): void;
+ * }
+ * interface MyThing<Info = {}> {
+ *     feedInfo(info: Info): void;
+ * }
+ * 
+ * // Finally, we want to declare a class for it. (The same works for extending layers.)
+ * // .. Let's try it in a couple of different ways.
+ * 
+ * // 1. Using `as any as ClassType` is fine, except we lose the static side typing.
+ * class MyThing<Info = {}> extends (mixinMyThing(Object) as any as ClassType) {}
+ * MyThing.feedStatically({})      // Doesn't exist.
+ * 
+ * // 2. What about if we add or use `MyThingType` - no, we cannot, cyclical reference.
+ * class MyThing<Info = {}> extends (mixinMyThing(Object) as any as MyThingType) {}
+ * 
+ * // 3. So let's cut the cyclicity using `PickAll` type.
+ * class MyThing<Info = {}> extends (mixinMyThing(Object) as any as ClassType & PickAll<MyThingType>) {}
+ * MyThing.feedStatically({})      // Exists.
+ * const myThing = new MyThing();  // Is allowed, but shouldn't be without (enabled: boolean).
+ * 
+ * // 4. Let's make it all work with `ReClass` type.
+ * // .. Note that we need to give the 2nd arg {} to drop the automatic instance reading.
+ * // .. However, we do not drop the automated constructor args reading (3rd arg is not given).
+ * class MyThing<Info = {}> extends (mixinMyThing(Object) as any as ReClass<MyThingType, {}>) {}
+ * MyThing.feedStatically({})          // Exists.
+ * const myThing = new MyThing();      // Not allowed - correct.
+ * const okThing = new MyThing(true);  // Allowed - correct.
+ * 
+ * // +  One final thing - the generics.
+ * // .. They work on the instance side, but cannot be typed to the static side this way.
+ * const thing = new MyThing<number>(true);
+ * thing.feedInfo(5);                // Ok.
+ * MyThing.feedStatically({});       // Should not be allowed.
+ * // .. Of course, you hardly ever need generics on the static methods & members.
+ * // .. But in anycase, if you do want to do it, use this trick instead.
+ * (MyThing as MyThingType<number>).feedStatically({});  // Not allowed - correct.
+ * (MyThing as MyThingType<number>).feedStatically(5);   // Allowed - correct.
+ * 
+ * ```
+ */
+export type ReClass<Class, Instance = InstanceTypeFrom<Class>, ConstructorArgs extends any[] = GetConstructorArgs<Class, any[]>> =
+    Pick<Class, keyof Class> & (new (...args: ConstructorArgs) => Instance);
 /** Typing to re-create a clean class type using separated Class and Instance types, and ConstructorArgs. For example:
  * 
  * ```
