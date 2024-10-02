@@ -2,10 +2,12 @@
 
 ## v1.0.1
 
-### Additions
+### Refines for static typing
 
 To help with the static side typing:
-- Added `PickAll<T>` and `ReClass<T, Instance?, Args?>`.
-- Added 2nd `Fallback` arg to `GetConstructorArgs<T, Fallback>` and `GetConstructorReturn<T, Fallback>`.
+- _added_: `PickAll<T>` and `ReClass<T, Instance?, Args?>`.
+- _added_: 2nd `Fallback` arg to `GetConstructorArgs<T, Fallback>` and `GetConstructorReturn<T, Fallback>`.
     * Defaults to `never` to reflect the behaviour that was previously the only option.
-- Updated README guidelines in relation to static side typing.
+- _added_: `ReMixin<MixinClass, MixinInstance?, ConstructorArgs?>`.
+- _modified_: `AsMixin` args by adding MixinClass: `AsMixin<MixinInstance, MixinClass?, ConstructorArgs?>`.
+- _updated_: README guidelines in relation to static side typing.
