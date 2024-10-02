@@ -351,7 +351,7 @@ class MyBase {
 }
 // 1. Just type it in using `typeof`.
 class MyMix1 extends mixinSignalBoy<MySignals, typeof MyBase>(MyBase) {}
-// 2. Or use `AsMixin` helper type.
+// 2. Or use `AsMixin` or `ReMixin` helper types.
 class MyMix2 extends (mixinSignalBoy as AsMixin<SignalBoy<MySignals>>)(MyBase) {}
 
 // In any case test.
@@ -843,7 +843,7 @@ class MyMultiMix extends
 
 // Could use:
 class MyMultiMix extends
-    (mixinTest2 as ReMixin<Test2Type<MyData>>)(
+    (mixinTest2 as ReMixin<Test2Type<MyData>>)( // Infer all from Test2Type.
         (mixinTest as AsMixin<Test<MyInfo>>)(MyBase)) {}
 
 // In both cases, the constructor args are auto-read from Test2Type<Data>.
