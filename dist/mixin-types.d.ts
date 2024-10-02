@@ -490,7 +490,7 @@ type AsInstance<Instance extends Object, Class = Instance["constructor"], Constr
  *
  * // .. Alternative 2nd line to above:
  * // class MyMultiMix extends
- * //     (mixinTest2 as ReMixin<Test2Type<MyData>, Test2<MyData>>)(
+ * //     (mixinTest2 as ReMixin<Test2Type<MyData>>)(
  * //         (mixinTest as AsMixin<Test<MyInfo>>)(MyBase)) {}
  *
  * // .. Test instance.
@@ -507,11 +507,13 @@ type AsInstance<Instance extends Object, Class = Instance["constructor"], Constr
 type AsMixin<MixinInstance extends Object, MixinClass = ClassTypeFrom<MixinInstance>, ConstructorArgs extends any[] = GetConstructorArgs<MixinClass, any[]>> = <TBase extends ClassType>(Base: TBase) => Omit<TBase & MixinClass, "new"> & {
     new (...args: ConstructorArgs): GetConstructorReturn<TBase> & MixinInstance;
 };
-/** Alternative for AsMixin that resembles ReClass, thus ReMixin.
+/** Alternative to AsMixin that resembles ReClass, thus ReMixin.
  * - The main difference is that you input the class type, not instance type, as the first argument.
  * - The 2nd type argument is the optional mixin instance, inferred by default from the MixinClass.
  * - The 3rd type arg is the optional constructor arguments, inferred by default from the MixinClass.
  * - For more details, see `AsMixin` (and `ReClass`), below just a short example.
+ *      * Note. It's preferred to use `ReMixin` if you've typed the statis side including the new constuctor.
+ *      * This is because then can infer everything from it: static side, instance side and constructor args.
  * @param MixinClass Define the static side class.
  * @param MixinInstance Optionally defined the instance type of the mixin. By default tries to infer from MixinClass.
  * @param ConstructorArgs Optionally define the constructor args explicitly - by default inferred from MixinClass.
@@ -531,10 +533,10 @@ type AsMixin<MixinInstance extends Object, MixinClass = ClassTypeFrom<MixinInsta
  *
  * // Could use:
  * class MyMultiMix extends
- *     (mixinTest2 as ReMixin<Test2Type<MyData>, Test2<MyData>>)(
+ *     (mixinTest2 as ReMixin<Test2Type<MyData>>)(
  *         (mixinTest as AsMixin<Test<MyInfo>>)(MyBase)) {}
  *
-
+ *
  * ```
  *
  */

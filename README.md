@@ -834,26 +834,19 @@ type ReMixin<
 
 // - Example - //
 
-// Let's first examine a simple mixin with generic params.
-// .. It works fine, until things become more complex: you get problems with excessive deepness of types.
-const mixinMyTest_Simple = <Info = {}>(Base: Base) => class MyTest extends Base {
-    feedInfo(info: Info): void {}
-}
+// Using the types from above.
 
-// To provide a mixin base without problems of deepness we can do the following.
-// .. Let's explicitly type what mixinMyTest returns to help typescript.
-interface MyTest<Info = {}> { feedInfo(info: Info): void; }
-function mixinMyTest<Info = {}, BaseClass extends ClassType = ClassType>(Base: BaseClass): ClassType<MyTest<Info>> {
-    return class MyTest extends Base {
-        feedInfo(info: Info): void {}
-    }
-}
+// Instead of:
+class MyMultiMix extends
+    (mixinTest2 as AsMixin<Test2<MyData>, Test2Type<MyData>>)(
+        (mixinTest as AsMixin<Test<MyInfo>>)(MyBase)) {}
 
-// The annoyance with above is that we lose automated typing of the BaseClass.
-// .. AsMixin simply provides a way to automate the typing of the base class.
-type MyInfo = { something: boolean; };
-class MyMix1 extends mixinMyTest<MyInfo, typeof MyBase>(MyBase) { } // Needs to specify the base type explicitly here.
-class MyMix2 extends (mixinMyTest as AsMixin<MyTest<MyInfo>>)(MyBase) { } // Get MyBase type dynamically.
+// Could use:
+class MyMultiMix extends
+    (mixinTest2 as ReMixin<Test2Type<MyData>>)(
+        (mixinTest as AsMixin<Test<MyInfo>>)(MyBase)) {}
+
+// In both cases, the constructor args are auto-read from Test2Type<Data>.
 
 ```
 

@@ -534,7 +534,7 @@ export type AsInstance<
  * 
  * // .. Alternative 2nd line to above:
  * // class MyMultiMix extends
- * //     (mixinTest2 as ReMixin<Test2Type<MyData>, Test2<MyData>>)(
+ * //     (mixinTest2 as ReMixin<Test2Type<MyData>>)(
  * //         (mixinTest as AsMixin<Test<MyInfo>>)(MyBase)) {}
  * 
  * // .. Test instance.
@@ -555,11 +555,13 @@ export type AsMixin<
 > =
     <TBase extends ClassType>(Base: TBase) => Omit<TBase & MixinClass, "new"> & { new (...args: ConstructorArgs): GetConstructorReturn<TBase> & MixinInstance; };
 
-/** Alternative for AsMixin that resembles ReClass, thus ReMixin.
+/** Alternative to AsMixin that resembles ReClass, thus ReMixin.
  * - The main difference is that you input the class type, not instance type, as the first argument.
  * - The 2nd type argument is the optional mixin instance, inferred by default from the MixinClass.
  * - The 3rd type arg is the optional constructor arguments, inferred by default from the MixinClass.
  * - For more details, see `AsMixin` (and `ReClass`), below just a short example.
+ *      * Note. It's preferred to use `ReMixin` if you've typed the statis side including the new constuctor.
+ *      * This is because then can infer everything from it: static side, instance side and constructor args.
  * @param MixinClass Define the static side class.
  * @param MixinInstance Optionally defined the instance type of the mixin. By default tries to infer from MixinClass.
  * @param ConstructorArgs Optionally define the constructor args explicitly - by default inferred from MixinClass.
@@ -579,10 +581,10 @@ export type AsMixin<
  * 
  * // Could use:
  * class MyMultiMix extends
- *     (mixinTest2 as ReMixin<Test2Type<MyData>, Test2<MyData>>)(
+ *     (mixinTest2 as ReMixin<Test2Type<MyData>>)(
  *         (mixinTest as AsMixin<Test<MyInfo>>)(MyBase)) {}
  * 
-
+ *
  * ```
  * 
  */
@@ -724,70 +726,3 @@ export type MixinsInstanceWith<
 export type MixinsFunc = <Mixins extends Array<(Base: ClassType) => ClassType>>(...mixins: ValidateMixins<Mixins>) => MergeMixins<Mixins>;
 /** The type for the `mixinsWith` function, including evaluating the sequence and returning combined class type. */
 export type MixinsWithFunc = <Base extends ClassType, Mixins extends Array<(Base: ClassType) => ClassType>>(Base: Base, ...mixins: ValidateMixins<Mixins, Base>) => MergeMixinsWith<Base, Mixins>;
-
-
-
-
-
-
-// Let's first examine a simple mixin with generic params.
-// .. It works fine, until things become more complex: you get problems with excessive deepness of types.
-const mixinTest_Simple = <Info = {}>(Base: ClassType) => class Test extends Base {
-    feedInfo(info: Info): void {}
-    }
-    
-// To provide a mixin base without problems of deepness we can do the following.
-// .. Let's explicitly type what mixinTest returns to help typescript.
-interface Test<Info = {}> { feedInfo(info: Info): void; }
-const mixinTest = <
-Info = {},
-BaseClass extends ClassType = ClassType
->(Base: BaseClass): ClassType<Test<Info>> => class Test extends Base {
-feedInfo(info: Info): void {}
-}
-
-// Custom base.
-class MyBase { someMember: number = 0; static SOME_MEMBER: number = 0; }
-
-// The annoyance with above is that we lose automated typing of the BaseClass.
-// .. AsMixin simply provides a way to automate the typing of the base class.
-// .. You can also optionally define the static side with the 2nd type arg.
-// .. And optionally the constructor arguments using the 3rd type arg.
-type MyInfo = { something: boolean; };
-class MyMix_1 extends mixinTest<MyInfo, typeof MyBase>(MyBase) { } // Needs to specify the base type explicitly here.
-class MyMix_2 extends (mixinTest as AsMixin<Test<MyInfo>>)(MyBase) { } // Get MyBase type dynamically.
-
-// The feature becomes more useful when typing a longer sequence.
-// .. Define another mixin with explicit interface.
-interface Test2Type<Data extends Record<string, any> = {}>
-extends AsClass<{}, Test2<Data>, [data: Data, ...args: any[]]> {
-SOME_STATIC: boolean;
-}
-interface Test2<Data extends Record<string, any> = {}> { data: Data; }
-const mixinTest2 = <Data extends Record<string, any> = {}>(Base: ClassType) => class extends Base {
-data: Data;
-static SOME_STATIC: boolean = false;
-constructor(data: Data, ...args: any[]) {
-super(...args);
-this.data = args[0];
-}
-}
-// .. Define class.
-type MyData = { name: string; }
-// class MyMultiMix extends
-// // Define constr. args for the last one.
-// (mixinTest2 as AsMixin<Test2<MyData>, Test2Type<MyData>, [data: MyData]>)(
-// (mixinTest as AsMixin<Test<MyInfo>>)(MyBase)) {}
-class MyMultiMix extends
-    // Define constr. args for the last one.
-    (mixinTest2 as ReMixin<Test2Type<MyData>, Test2<MyData>>)(
-        (mixinTest as AsMixin<Test<MyInfo>>)(MyBase)) {}
-
-// .. Test instance.
-const myMultiMix = new MyMultiMix({ name: "me" }); // Requires `MyData`.
-myMultiMix.someMember = 5; // Requires `number`.
-myMultiMix.feedInfo({ something: false }); // Requires `MyInfo`.
-// .. Test static.
-MyMultiMix.SOME_STATIC = true; // Requires `boolean`.
-MyMultiMix.SOME_MEMBER = 0; // Requires `number`.
-
