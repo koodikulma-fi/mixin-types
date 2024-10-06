@@ -46,8 +46,6 @@ export default [
                     keep_fnames: true,
                     keep_fargs: true,
                     keep_classnames: true,
-                    // toplevel: true,
-                    // unsafe_arrows: true,
                 },
                 output: { quote_style: 1 }
             }),
@@ -72,8 +70,6 @@ export default [
                     keep_fnames: true,
                     keep_fargs: true,
                     keep_classnames: true,
-                    // toplevel: true,
-                    // unsafe_arrows: true,
                 },
                 output: { quote_style: 1 }
             }),
