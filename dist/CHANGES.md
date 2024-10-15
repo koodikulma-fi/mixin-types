@@ -7,7 +7,7 @@
     - The point is to allow inferring the class instance (3rd arg) from the given class type (1st arg), while defining args explicitly to make usage more convenient in some cases.
 
 ### Refines package.json
-- Adds support for explicitly only importing the types by using `"mixin-types/types"` sub module.
+- Adds support for (explicitly) only importing the types by using `"mixin-types/types"` sub module.
     - For example: `import { AsMixin } from "mixin-types/types";`.
 
 ## v1.1.0
