@@ -648,6 +648,8 @@ type PickAll<T> = Pick<T, keyof T>;
 
 ### 9.2. Mixin TS helpers: `ReClass<Class, Instance?, ConstructorArgs?>`
 
+- As of v1.1.1, there is also variant: `ReClassArgs<Class, ConstructorArgs, Instance?>`
+
 ```typescript
 
 // - Arguments - //
@@ -814,6 +816,8 @@ class MyMix2 extends (mixinMyTest as AsMixin<MyTest<MyInfo>>)(MyBase) { } // Get
 ```
 
 ### 9.6. Mixin TS helpers: `ReMixin<MixinClass, MixinInstance?, ConstructorArgs?>`
+
+- As of v1.1.1, there is also variant: `ReMixinArgs<MixinClass, ConstructorArgs, MixinInstance?>`
 
 ```typescript
 

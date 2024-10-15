@@ -310,10 +310,10 @@ export type InstanceTypeFrom<Anything, Fallback = {}> = Anything extends abstrac
 export type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
 /** Tries to infer class type from "constructor" definition. */
 export type ClassTypeFrom<T, Fallback = {}> = T extends Object ? T["constructor"] extends new (...args: any[]) => any ? T["constructor"] : Fallback : Fallback;
-/** Get the type for class constructor arguments. */
-export type GetConstructorArgs<T, Fallback = never> = T extends new (...args: infer U) => any ? U : Fallback;
-/** Get the type for class constructor return. */
-export type GetConstructorReturn<T, Fallback = never> = T extends new (...args: any[]) => infer U ? U : Fallback;
+/** Get the type for class constructor arguments with Fallback (defaults to `never`). */
+export type GetConstructorArgs<T, Fallback = never> = T extends new (...args: infer P) => any ? P : Fallback;
+/** Get the type for class constructor return with Fallback (defaults to `never`). */
+export type GetConstructorReturn<T, Fallback = never> = T extends new (...args: any[]) => infer R ? R : Fallback;
 
 // Re-type class.
 /** Simply creates a new type object by picking all properties. Useful for typing static side when extending mixins, as Pick drops the `new () => Instance` part automatically - see more in `ReClass` comments. */
@@ -380,6 +380,8 @@ export type PickAll<T> = Pick<T, keyof T>;
  */
 export type ReClass<Class, Instance = InstanceTypeFrom<Class>, ConstructorArgs extends any[] = GetConstructorArgs<Class, any[]>> =
     Pick<Class, keyof Class> & (new (...args: ConstructorArgs) => Instance);
+/** Alias for ReClass that requires ConstructorArgs as the 2nd arg, so that the 3rd arg for Instance type can be inferred automated. */
+export type ReClassArgs<Class, ConstructorArgs extends any[], Instance = InstanceTypeFrom<Class>> = ReClass<Class, Instance, ConstructorArgs>;
 /** Typing to re-create a clean class type using separated Class and Instance types, and ConstructorArgs. For example:
  * 
  * ```
@@ -594,6 +596,8 @@ export type ReMixin<
     ConstructorArgs extends any[] = GetConstructorArgs<MixinClass, any[]>
 > =
     <TBase extends ClassType>(Base: TBase) => Omit<TBase & MixinClass, "new"> & { new (...args: ConstructorArgs): GetConstructorReturn<TBase> & MixinInstance; };
+/** Alias for ReMixin that requires ConstructorArgs as the 2nd arg, so that the 3rd arg for MixinInstance type can be inferred automated. */
+export type ReMixinArgs<MixinClass, ConstructorArgs extends any[], MixinInstance = InstanceTypeFrom<MixinClass>> = ReMixin<MixinClass, MixinInstance, ConstructorArgs>;
 
 // Evaluate mixins.
 /** Evaluate a chain of mixins.

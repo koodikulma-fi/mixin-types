@@ -277,10 +277,10 @@ type InstanceTypeFrom<Anything, Fallback = {}> = Anything extends abstract new (
 type ClassType<T = {}, Args extends any[] = any[]> = new (...args: Args) => T;
 /** Tries to infer class type from "constructor" definition. */
 type ClassTypeFrom<T, Fallback = {}> = T extends Object ? T["constructor"] extends new (...args: any[]) => any ? T["constructor"] : Fallback : Fallback;
-/** Get the type for class constructor arguments. */
-type GetConstructorArgs<T, Fallback = never> = T extends new (...args: infer U) => any ? U : Fallback;
-/** Get the type for class constructor return. */
-type GetConstructorReturn<T, Fallback = never> = T extends new (...args: any[]) => infer U ? U : Fallback;
+/** Get the type for class constructor arguments with Fallback (defaults to `never`). */
+type GetConstructorArgs<T, Fallback = never> = T extends new (...args: infer P) => any ? P : Fallback;
+/** Get the type for class constructor return with Fallback (defaults to `never`). */
+type GetConstructorReturn<T, Fallback = never> = T extends new (...args: any[]) => infer R ? R : Fallback;
 /** Simply creates a new type object by picking all properties. Useful for typing static side when extending mixins, as Pick drops the `new () => Instance` part automatically - see more in `ReClass` comments. */
 type PickAll<T> = Pick<T, keyof T>;
 /** Uses the concept from PickAll to re-create the class type.
@@ -344,6 +344,8 @@ type PickAll<T> = Pick<T, keyof T>;
  * ```
  */
 type ReClass<Class, Instance = InstanceTypeFrom<Class>, ConstructorArgs extends any[] = GetConstructorArgs<Class, any[]>> = Pick<Class, keyof Class> & (new (...args: ConstructorArgs) => Instance);
+/** Alias for ReClass that requires ConstructorArgs as the 2nd arg, so that the 3rd arg for Instance type can be inferred automated. */
+type ReClassArgs<Class, ConstructorArgs extends any[], Instance = InstanceTypeFrom<Class>> = ReClass<Class, Instance, ConstructorArgs>;
 /** Typing to re-create a clean class type using separated Class and Instance types, and ConstructorArgs. For example:
  *
  * ```
@@ -543,6 +545,8 @@ type AsMixin<MixinInstance extends Object, MixinClass = ClassTypeFrom<MixinInsta
 type ReMixin<MixinClass, MixinInstance = InstanceTypeFrom<MixinClass>, ConstructorArgs extends any[] = GetConstructorArgs<MixinClass, any[]>> = <TBase extends ClassType>(Base: TBase) => Omit<TBase & MixinClass, "new"> & {
     new (...args: ConstructorArgs): GetConstructorReturn<TBase> & MixinInstance;
 };
+/** Alias for ReMixin that requires ConstructorArgs as the 2nd arg, so that the 3rd arg for MixinInstance type can be inferred automated. */
+type ReMixinArgs<MixinClass, ConstructorArgs extends any[], MixinInstance = InstanceTypeFrom<MixinClass>> = ReMixin<MixinClass, MixinInstance, ConstructorArgs>;
 /** Evaluate a chain of mixins.
  * - Returns back an array with the respective mixins or supplements with `never` for each failed item.
  * - The failure is by it required from previous mixins or by not being a function in the mixin form: `(Base: ClassType) => ClassType`.
@@ -626,4 +630,4 @@ type MixinsFunc = <Mixins extends Array<(Base: ClassType) => ClassType>>(...mixi
 /** The type for the `mixinsWith` function, including evaluating the sequence and returning combined class type. */
 type MixinsWithFunc = <Base extends ClassType, Mixins extends Array<(Base: ClassType) => ClassType>>(Base: Base, ...mixins: ValidateMixins<Mixins, Base>) => MergeMixinsWith<Base, Mixins>;
 
-export { AsClass, AsInstance, AsMixin, ClassType, ClassTypeFrom, GetConstructorArgs, GetConstructorReturn, IncludesValue, InstanceTypeFrom, IterateBackwards, IterateForwards, MergeMixins, MergeMixinsWith, MixinsFunc, MixinsInstance, MixinsInstanceWith, MixinsWithFunc, PickAll, ReClass, ReMixin, ValidateMixins, mixins, mixinsWith };
+export { AsClass, AsInstance, AsMixin, ClassType, ClassTypeFrom, GetConstructorArgs, GetConstructorReturn, IncludesValue, InstanceTypeFrom, IterateBackwards, IterateForwards, MergeMixins, MergeMixinsWith, MixinsFunc, MixinsInstance, MixinsInstanceWith, MixinsWithFunc, PickAll, ReClass, ReClassArgs, ReMixin, ReMixinArgs, ValidateMixins, mixins, mixinsWith };
