@@ -1,6 +1,6 @@
 # CHANGES
 
-## v1.1.1
+## v1.1.1 (unreleased)
 
 ### Refines package.json
 - Adds support for importing solely the types by using `"mixin-types/types"` sub module.
