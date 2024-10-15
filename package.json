@@ -1,6 +1,6 @@
 {
   "name": "mixin-types",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A tiny library providing typing tools for mixin classes and 2 simple JS funcs mixins (mixins and mixinsWith).",
   "keywords": [
     "mixin-types",
@@ -33,10 +33,14 @@
   "types": "./mixin-types.d.ts",
   "exports": {
     ".": {
-      "import": "./mixin-types.module.js",
-      "require": "./mixin-types.js"
+      "import": "./dist/mixin-types.module.js",
+      "require": "./dist/mixin-types.js",
+      "types": "./dist/mixin-types.d.ts"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./dist/package.json",
+    "./types": {
+      "types": "./dist/mixin-types.d.ts"
+    }
   },
   "files": [
     "dist",

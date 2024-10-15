@@ -1,5 +1,11 @@
 # CHANGES
 
+## v1.1.1
+
+### Refines package.json
+- Adds support for importing solely the types by using `"mixin-types/types"` sub module.
+    - For example: `import { AsMixin } from "mixin-types/types";`.
+
 ## v1.1.0
 
 ### Refines for static typing
