@@ -2,10 +2,9 @@
 
 ## v1.1.1
 
-### Adds type variants.
-- Adds variants `ReClassArgs` and `ReMixinArgs` that simply switch the order of the 2nd and 3rd argument.
-    - The point is to allow inferring the class instance from the given class type, while defining args explicitly.
-    - This way no need to retype the instance explicitly in case is only wanting to define the constructor args.
+### Adds 2 type variants.
+- Adds types `ReClassArgs` and `ReMixinArgs` that require constructor args as the 2nd type arg (not 3rd).
+    - The point is to allow inferring the class instance (3rd arg) from the given class type (1st arg), while defining args explicitly to make usage more convenient in some cases.
 
 ### Refines package.json
 - Adds support for explicitly only importing the types by using `"mixin-types/types"` sub module.
