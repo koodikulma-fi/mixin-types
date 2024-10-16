@@ -648,7 +648,7 @@ type PickAll<T> = Pick<T, keyof T>;
 
 ### 9.2. Mixin TS helpers: `ReClass<Class, Instance?, ConstructorArgs?>`
 
-- As of v1.1.1, there is also variant: `ReClassArgs<Class, ConstructorArgs, Instance?>`
+- As of v1.1.1, there is also variant: `ReClassArgs<Class, ConstructorArgs, Instance?>`.
 
 ```typescript
 
@@ -742,6 +742,8 @@ MyThing.staticInfo = {};            // Should not be allowed.
 
 ### 9.4. Mixin TS helpers: `AsInstance<Instance, Class?, ConstructorArgs?>`
 
+- As of v1.1.1, there is also variant: `AsInstanceArgs<Instance, ConstructorArgs, Class?>`.
+
 ```typescript
 
 // - Arguments - //
@@ -772,6 +774,8 @@ interface MyThing<Info = {}> extends AsInstance<Test1 & Test2<Info> & MyBase> {}
      3. As an instance based alternative to `AsClass` - although typescript won't read constructor args from the instance.
 
 ### 9.5. Mixin TS helpers: `AsMixin<MixinInstance, MixinClass?, ConstructorArgs?>`
+
+- As of v1.1.1, there is also variant: `AsMixinArgs<MixinInstance, ConstructorArgs, MixinClass?>`.
 
 ```typescript
 
@@ -817,7 +821,7 @@ class MyMix2 extends (mixinMyTest as AsMixin<MyTest<MyInfo>>)(MyBase) { } // Get
 
 ### 9.6. Mixin TS helpers: `ReMixin<MixinClass, MixinInstance?, ConstructorArgs?>`
 
-- As of v1.1.1, there is also variant: `ReMixinArgs<MixinClass, ConstructorArgs, MixinInstance?>`
+- As of v1.1.1, there is also variant: `ReMixinArgs<MixinClass, ConstructorArgs, MixinInstance?>`.
 
 ```typescript
 

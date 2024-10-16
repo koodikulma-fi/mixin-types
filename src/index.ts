@@ -467,6 +467,8 @@ export type AsInstance<
     Class = Instance["constructor"],
     ConstructorArgs extends any[] = any[]
 > = Instance & { ["constructor"]: AsClass<Class, Instance, ConstructorArgs>; }
+/** Alias for AsInstance that requires ConstructorArgs as the 2nd arg, so that the 3rd arg for Class type can be inferred automated. */
+export type AsInstanceArgs<Instance extends Object, ConstructorArgs extends any[], Class = Instance["constructor"]> = AsInstance<Instance, Class, ConstructorArgs>;
 
 // Mixin re-typing.
 /** Type helper for classes extending mixins with generic parameters.
@@ -553,10 +555,11 @@ export type AsInstance<
 export type AsMixin<
     MixinInstance extends Object,
     MixinClass = ClassTypeFrom<MixinInstance>,
-    ConstructorArgs extends any[] = GetConstructorArgs<MixinClass, any[]>,
+    ConstructorArgs extends any[] = GetConstructorArgs<MixinClass, any[]>
 > =
     <TBase extends ClassType>(Base: TBase) => Omit<TBase & MixinClass, "new"> & { new (...args: ConstructorArgs): GetConstructorReturn<TBase> & MixinInstance; };
-
+/** Alias for AsMixin that requires ConstructorArgs as the 2nd arg, so that the 3rd arg for MixinClass type can be inferred automated. */
+export type AsMixinArgs<MixinInstance extends Object, ConstructorArgs extends any[], MixinClass = ClassTypeFrom<MixinInstance>> = AsMixin<MixinInstance, MixinClass, ConstructorArgs>;
 /** Alternative to AsMixin that resembles ReClass, thus ReMixin.
  * - The main difference is that you input the class type, not instance type, as the first argument.
  * - The 2nd type argument is the optional mixin instance, inferred by default from the MixinClass.

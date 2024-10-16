@@ -2,9 +2,10 @@
 
 ## v1.1.1
 
-### Adds 2 type variants.
-- Adds types `ReClassArgs` and `ReMixinArgs` that require constructor args as the 2nd type arg (not 3rd).
-    - The point is to allow inferring the class instance (3rd arg) from the given class type (1st arg), while defining args explicitly to make usage more convenient in some cases.
+### Adds 4 type variants.
+- Adds types `ReClassArgs`, `ReMixinArgs`, `AsMixinArgs` and `AsInstanceArgs` that require constructor args as the 2nd type arg (not 3rd).
+    - For `ReClassArgs` and `ReMixinArgs` the point is to allow inferring the class instance (3rd arg) from the given class type (1st arg), while defining args explicitly to make usage more convenient in some cases.
+    - Likewise `AsMixin` and `AsInstanceArgs` help to infer the class type (3rd arg) automatically from the instance type (1st arg).
 
 ### Refines package.json
 - Adds support for (explicitly) only importing the types by using `"mixin-types/types"` sub module.
