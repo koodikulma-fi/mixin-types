@@ -1,6 +1,6 @@
 # CHANGES
 
-## v1.1.1
+## v1.1.1 (2024-10-31)
 
 ### Adds 4 type variants.
 - Adds types `ReClassArgs`, `ReMixinArgs`, `AsMixinArgs` and `AsInstanceArgs` that require constructor args as the 2nd type arg (not 3rd).
@@ -11,7 +11,7 @@
 - Adds support for (explicitly) only importing the types by using `"mixin-types/types"` sub module.
     - For example: `import { AsMixin } from "mixin-types/types";`.
 
-## v1.1.0
+## v1.1.0 (2024-10-11)
 
 ### Refines for static typing
 
